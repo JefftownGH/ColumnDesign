@@ -10,14 +10,14 @@ namespace ColumnDesign
         public Result OnStartup(UIControlledApplication application)
         {
             var panel = application.CreateRibbonPanel("Column design");
-            if (panel.AddItem(new PushButtonData("AutoNumerate", "Column\ncreator",
+            if (panel.AddItem(new PushButtonData("ColumnCreator", "Column\ncreator",
                 Assembly.GetExecutingAssembly().Location,
-                typeof(ColumnCreator).FullName)) is PushButton buttonAutoNumerate)
+                typeof(ColumnCreator).FullName)) is PushButton buttonColumnCreator)
             {
-                buttonAutoNumerate.ToolTip = "Automatic creation of worksheets";
-                buttonAutoNumerate.Image = new BitmapImage(new Uri(
+                buttonColumnCreator.ToolTip = "Automatic creation of worksheets";
+                buttonColumnCreator.Image = new BitmapImage(new Uri(
                     "pack://application:,,,/ColumnDesign;component/Resources/ColumnCreator16.png"));
-                buttonAutoNumerate.LargeImage = new BitmapImage(new Uri(
+                buttonColumnCreator.LargeImage = new BitmapImage(new Uri(
                     "pack://application:,,,/ColumnDesign;component/Resources/ColumnCreator32.png"));
             }
 
