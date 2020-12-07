@@ -5,8 +5,25 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:ColumnDesign.UI"
         mc:Ignorable="d"
-        Title="ColumnCreator" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        Title="ColumnCreator" Height="330" Width="540">
+    <TabControl>
+        <TabItem>
+            <TabItem.Header>
+                <TextBlock Margin="3">Gates Columns</TextBlock>
+            </TabItem.Header>
+            <TabItem.Content>
+                <StackPanel>
+                </StackPanel>
+            </TabItem.Content>
+        </TabItem>
+        <TabItem>
+            <TabItem.Header>
+                <TextBlock Margin="3">Scissor Clamp Columns</TextBlock>
+            </TabItem.Header>
+            <TabItem.Content>
+                <StackPanel>
+                </StackPanel>
+            </TabItem.Content>
+        </TabItem>
+    </TabControl>
 </Window>
