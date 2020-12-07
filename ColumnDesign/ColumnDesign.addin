@@ -1,0 +1,10 @@
+﻿<RevitAddIns>
+    <AddIn Type="Application">
+        <Name>ColumnDesign</Name>
+        <Assembly>ColumnDesign.dll</Assembly>
+        <AddInId>068BE088-996C-41A4-A00A-86D315BF89DD</AddInId>
+        <FullClassName>ColumnDesign.Application</FullClassName>
+        <VendorId>Nice3point</VendorId>
+        <VendorDescription>Roman Karpovich</VendorDescription>
+    </AddIn>
+</RevitAddIns>
