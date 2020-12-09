@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.Attributes;
+﻿using System;
+using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 
@@ -9,33 +10,16 @@ namespace ColumnDesign
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
-            var uiDoc = commandData.Application.ActiveUIDocument;
-            var doc = uiDoc.Document;
-            CreateSheet(doc);
-            return Result.Succeeded;
-        }
-
-        private static void CreateSheet(Document doc)
-        {
-            using var tr = new Transaction(doc, "Create new sheet");
-            tr.Start();
-            var collector = new FilteredElementCollector(doc)
-                .OfClass(typeof(FamilySymbol))
-                .OfCategory(BuiltInCategory.OST_TitleBlocks);
-            Element titleBlock = null;
-            foreach(var element in collector)
+            try
             {
-                if(element.Name.Contains(GlobalNames.TitleBlockFamilyName))
-                {
-                    titleBlock = element;
-                }
+                Application.ThisApp.ShowForm(commandData.Application);
+                return Result.Succeeded;
             }
-
-            if (titleBlock != null)
+            catch (Exception ex)
             {
-                var viewSheet = ViewSheet.Create(doc, titleBlock.Id);
+                message = ex.Message;
+                return Result.Failed;
             }
-            tr.Commit();
         }
     }
 }

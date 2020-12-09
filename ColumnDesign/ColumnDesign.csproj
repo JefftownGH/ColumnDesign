@@ -54,10 +54,13 @@
         <Compile Include="Application.cs" />
         <Compile Include="ColumnCreator.cs" />
         <Compile Include="GlobalNames.cs" />
+        <Compile Include="Methods\MethodsWrapped.cs" />
+        <Compile Include="Methods\RevitEventWrapper.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="UI\ColumnCreator.xaml.cs">
-          <DependentUpon>ColumnCreator.xaml</DependentUpon>
+        <Compile Include="UI\ColumnCreatorView.xaml.cs">
+          <DependentUpon>ColumnCreatorView.xaml</DependentUpon>
         </Compile>
+        <Compile Include="Methods\Methods.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <ItemGroup>
@@ -68,13 +71,12 @@
       <Resource Include="Resources\ColumnCreator32.png" />
     </ItemGroup>
     <ItemGroup>
+        <Page Include="UI\ColumnCreatorView.xaml" />
+    </ItemGroup>
+    <ItemGroup>
         <CopyItems Include="$(TargetDir)\*.dll" />
         <CopyItems Include="$(TargetDir)\*.addin" />
     </ItemGroup>
-    <ItemGroup>
-      <Page Include="UI\ColumnCreator.xaml" />
-    </ItemGroup>
-<!--    <Target Name="BeforeBuild">-->
     <Target Name="AfterBuild">
         <Copy SourceFiles="@(CopyItems)" DestinationFolder="$(AppData)\Autodesk\Revit\Addins\2019" />
 <!--        <Copy SourceFiles="@(CopyItems)" DestinationFolder="$(AppData)\Autodesk\Revit\Addins\2020"/>

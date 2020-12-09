@@ -1,0 +1,87 @@
+﻿<Window x:Class="ColumnDesign.UI.ColumnCreatorView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:ColumnDesign.UI"
+        mc:Ignorable="d"
+        Title="ColumnCreator" Height="330" Width="540">
+    <TabControl>
+        <TabItem>
+            <TabItem.Header>
+                <TextBlock Margin="3">Gates Columns</TextBlock>
+            </TabItem.Header>
+            <TabItem.Content>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Sheet name</TextBlock>
+                        <TextBox x:Name="SheetName">24" x 24" GATES COLUMN FORM</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Project title</TextBlock>
+                        <TextBox x:Name="ProjectTitle">Project title</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Project address</TextBlock>
+                        <TextBox x:Name="ProjectAddress">Project address</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Date</TextBlock>
+                        <TextBox x:Name="Date">12/3/20</TextBox>
+                    </StackPanel>    
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Sheet issued for...</TextBlock>
+                        <ComboBox Width="100" x:Name="SheetIssuedFor">
+                            <TextBlock>PRELIMINARY</TextBlock>
+                            <TextBlock>SUBMITTAL REVIEW</TextBlock>
+                            <TextBlock>FOR CONSTRUCTION</TextBlock>
+                            <TextBlock>OTHER</TextBlock>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Scale</TextBlock>
+                        <TextBox>0.75</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Drawn by</TextBlock>
+                        <TextBox x:Name="DrawnBy">MCC</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Job #</TextBlock>
+                        <TextBox x:Name="JobN">999</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Sheet</TextBlock>
+                        <TextBox x:Name="SheetNumber">1.0.0</TextBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>Suffix</TextBlock>
+                        <TextBox x:Name="Suffix">A</TextBox>    
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>McClone Area</TextBlock>
+                        <ComboBox Width="100" SelectedIndex="2">
+                            <TextBlock>CO</TextBlock>
+                            <TextBlock>HI</TextBlock>
+                            <TextBlock>NCA</TextBlock>
+                            <TextBlock>SCA</TextBlock>
+                            <TextBlock>STX</TextBlock>
+                            <TextBlock>WA</TextBlock>
+                            <TextBlock>NCA</TextBlock>
+                        </ComboBox>
+                    </StackPanel>
+                    <Button Content="Draw Gates!" 
+                            Click="ButtonDrawGates_OnClick"/>
+                </StackPanel>
+            </TabItem.Content>
+        </TabItem>
+        <TabItem>
+            <TabItem.Header>
+                <TextBlock Margin="3">Scissor Clamp Columns</TextBlock>
+            </TabItem.Header>
+            <TabItem.Content>
+                <StackPanel />
+            </TabItem.Content>
+        </TabItem>
+    </TabControl>
+</Window>
