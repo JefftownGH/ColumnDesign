@@ -61,6 +61,7 @@
           <DependentUpon>ColumnCreatorView.xaml</DependentUpon>
         </Compile>
         <Compile Include="Methods\Methods.cs" />
+        <Compile Include="ViewModel\ColumnCreatorViewModel.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <ItemGroup>
