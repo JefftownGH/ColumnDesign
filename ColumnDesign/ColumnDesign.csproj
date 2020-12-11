@@ -56,7 +56,25 @@
         <Compile Include="GlobalNames.cs" />
         <Compile Include="Methods\MethodsWrapped.cs" />
         <Compile Include="Methods\RevitEventWrapper.cs" />
+        <Compile Include="Modules\AutoName.cs" />
+        <Compile Include="Modules\CalcWeight_Function.cs" />
+        <Compile Include="Modules\CheckInputs_Function.cs" />
+        <Compile Include="Modules\Collection_Function.cs" />
+        <Compile Include="Modules\ColumnCreatorRun.cs" />
+        <Compile Include="Modules\ConvertFeetInchesToNumber.cs" />
+        <Compile Include="Modules\ConvertNumberToFeetInches.cs" />
+        <Compile Include="Modules\GetPlySeams_Function.cs" />
+        <Compile Include="Modules\ImportMatrix_Function.cs" />
+        <Compile Include="Modules\KeypressModuleFtIn.cs" />
+        <Compile Include="Modules\KeyPressModuleNum.cs" />
+        <Compile Include="Modules\ReadSizes_Function.cs" />
+        <Compile Include="Modules\SetNewColumnStyles_Function.cs" />
+        <Compile Include="Modules\sUpdatePly.cs" />
+        <Compile Include="Modules\UpdatePly.cs" />
+        <Compile Include="Modules\zScissorClampModule.cs" />
+        <Compile Include="Properties\Annotations.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="UI\AutocadForm.cs" />
         <Compile Include="UI\ColumnCreatorView.xaml.cs">
           <DependentUpon>ColumnCreatorView.xaml</DependentUpon>
         </Compile>

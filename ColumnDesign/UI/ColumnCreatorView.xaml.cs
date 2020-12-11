@@ -21,32 +21,32 @@ namespace ColumnDesign.UI
             _doc = _uiDoc.Document;
             DataContext = new ColumnCreatorViewModel();
             InitializeComponent();
-            _mExternalMethodWpfArg = eExternalMethodWpfArg;
             InitializeFields();
+            _mExternalMethodWpfArg = eExternalMethodWpfArg;
         }
 
         private void InitializeFields()
         {
-            Date.Text = DateTime.Today.ToString("dd/MM/yyyy");
+            var now = DateTime.Now.ToString("dd/M/yyyy");
+            Date.Text = now;
+            SDate.Text = now;
         }
 
         private void ButtonDrawGates_OnClick(object sender, RoutedEventArgs e)
         {
             _mExternalMethodWpfArg.Raise(this);
         }
-        private void WindowX_OnChecked(object sender, RoutedEventArgs e)
+        private void Window_OnChecked(object sender, RoutedEventArgs e)
         {
-            if (WindowY.IsChecked == true)
-            {
-                WindowY.IsChecked = false;
-            }
+            if (WindowY.IsChecked == true) WindowY.IsChecked = false;
+            if (WindowX.IsChecked == true) WindowX.IsChecked = false;
+            Picking.IsEnabled = false;
+            Regular.IsChecked = true;
         }
-        private void WindowY_OnChecked(object sender, RoutedEventArgs e)
+        
+        private void Window_OnUnchecked(object sender, RoutedEventArgs e)
         {
-            if (WindowX.IsChecked == true)
-            {
-                WindowX.IsChecked = false;
-            }
+            Picking.IsEnabled = true;
         }
     }
 }

@@ -8,6 +8,9 @@
         Title="ColumnCreator"
         Height="550"
         Width="750"
+        MinHeight="550"
+        MinWidth="750"
+        WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance vm:ColumnCreatorViewModel }">
     <Window.Resources>
         <Style TargetType="{x:Type TextBox}">
@@ -23,7 +26,8 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="true">
-                    <Setter Property="ToolTip" Value="{Binding RelativeSource={x:Static RelativeSource.Self},
+                    <Setter Property="ToolTip"
+                            Value="{Binding RelativeSource={x:Static RelativeSource.Self},
                         Path=(Validation.Errors)/ErrorContent}" />
                 </Trigger>
             </Style.Triggers>
@@ -62,8 +66,8 @@
                     <Button DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" Click="ButtonDrawGates_OnClick" />
                     <StackPanel DockPanel.Dock="Left" Width="225">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in"  />
-                            <TextBlock Text="Window ?"/>
+                            <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />
+                            <TextBlock Text="Window ?" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Width (X)</TextBlock>
@@ -76,7 +80,8 @@
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
-                            <CheckBox x:Name="WindowX" Margin="10,0,0,0" Checked="WindowX_OnChecked" />
+                            <CheckBox x:Name="WindowX" Margin="10,0,0,0" Checked="Window_OnChecked"
+                                      Unchecked="Window_OnUnchecked" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Length (Y)</TextBlock>
@@ -89,7 +94,8 @@
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
-                            <CheckBox x:Name="WindowY" Margin="10,0,0,0" Checked="WindowY_OnChecked" />
+                            <CheckBox x:Name="WindowY" Margin="10,0,0,0" Checked="Window_OnChecked"
+                                      Unchecked="Window_OnUnchecked" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Height (Z)</TextBlock>
@@ -105,12 +111,20 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Quantity</TextBlock>
-                            <TextBox x:Name="Quantity" Width="100" />
+                            <TextBox x:Name="Quantity" Width="100">
+                                <TextBox.Text>
+                                    <Binding Path="Quantity" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
                         </StackPanel>
                         <TextBlock>Squaring Corners</TextBlock>
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton>Regular</RadioButton>
-                            <RadioButton Margin="20,0,0,0" IsChecked="True">Picking</RadioButton>
+                            <RadioButton x:Name="Regular">Regular</RadioButton>
+                            <RadioButton x:Name="Picking" Margin="20,0,0,0" IsChecked="True">Picking</RadioButton>
                         </StackPanel>
                         <TextBlock>Plywood type</TextBlock>
                         <TextBox x:Name="PlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
@@ -121,12 +135,12 @@
                             <RadioButton>36-48 Gates</RadioButton>
                             <RadioButton IsChecked="True">Choose by column size</RadioButton>
                         </StackPanel>
-                        <CheckBox IsChecked="True" Content="Allow mismatched clamps" />
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Sheet name</TextBlock>
-                            <TextBox x:Name="SheetName" Width="200">24" x 24" GATES COLUMN FORM</TextBox>
+                            <TextBox x:Name="SheetName" Width="200"
+                                     Text="{Binding SheetName, UpdateSourceTrigger=PropertyChanged }" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Project title</TextBlock>
@@ -212,8 +226,159 @@
                 <TextBlock Margin="3">Scissor Clamp Columns</TextBlock>
             </TabItem.Header>
             <TabItem.Content>
-                <StackPanel />
+                <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" Click="ButtonDrawGates_OnClick" />
+                    <StackPanel DockPanel.Dock="Left" Width="225">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="60">Width (X)</TextBlock>
+                            <TextBox x:Name="SWidthX" Width="100" Style="{StaticResource TextBoxInError}">
+                                <TextBox.Text>
+                                    <Binding Path="SWidthX" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="60">Length (Y)</TextBlock>
+                            <TextBox x:Name="SLengthY" Width="100" Style="{StaticResource TextBoxInError}">
+                                <TextBox.Text>
+                                    <Binding Path="SLengthY" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="60">Height (Z)</TextBlock>
+                            <TextBox x:Name="SHeightZ" Width="100" Style="{StaticResource TextBoxInError}">
+                                <TextBox.Text>
+                                    <Binding Path="SHeightZ" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="8" Max="20" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="60">Quantity</TextBlock>
+                            <TextBox x:Name="SQuantity" Width="100">
+                                <TextBox.Text>
+                                    <Binding Path="SQuantity" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                            </TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="53">
+                            <TextBlock VerticalAlignment="Bottom">Maximum height<LineBreak />w/ full liquid head:</TextBlock>
+                            <TextBlock x:Name="SMaxHeight" VerticalAlignment="Bottom">N/A</TextBlock>
+                        </StackPanel>
+                        <TextBlock>Plywood type</TextBlock>
+                        <TextBox x:Name="SPlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
+                        <TextBlock>Clamp size</TextBlock>
+                        <StackPanel>
+                            <RadioButton>36" Scissor clamp</RadioButton>
+                            <RadioButton>48" Scissor clamp</RadioButton>
+                            <RadioButton>60" Scissor clamp</RadioButton>
+                            <RadioButton IsChecked="True">Choose by column size</RadioButton>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Sheet name</TextBlock>
+                            <TextBox x:Name="SSheetName" Width="200"
+                                     Text="{Binding SSheetName, UpdateSourceTrigger=PropertyChanged }" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Project title</TextBlock>
+                            <TextBox x:Name="SProjectTitle" Width="200">Project title</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Project address</TextBlock>
+                            <TextBox x:Name="SProjectAddress" Width="200">Project address</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Date</TextBlock>
+                            <TextBox x:Name="SDate" Width="200">12/03/20</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock>Sheet issued for...</TextBlock>
+                            <ComboBox Width="200" x:Name="SSheetIssuedFor">
+                                <TextBlock Margin="0">PRELIMINARY</TextBlock>
+                                <TextBlock Margin="0">SUBMITTAL REVIEW</TextBlock>
+                                <TextBlock Margin="0">FOR CONSTRUCTION</TextBlock>
+                                <TextBlock Margin="0">OTHER</TextBlock>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Scale</TextBlock>
+                            <TextBox Width="200">0.75</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Drawn by</TextBlock>
+                            <TextBox x:Name="SDrawnBy" Width="200">MCC</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Job #</TextBlock>
+                            <TextBox x:Name="SJobN" Width="200">999</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Sheet</TextBlock>
+                            <TextBox x:Name="SSheetNumber" Width="200">1.0.0</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">Suffix</TextBlock>
+                            <TextBox x:Name="SSuffix" Width="200">A</TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Width="100">McClone Area</TextBlock>
+                            <ComboBox Width="200" SelectedIndex="2">
+                                <TextBlock Margin="0">CO</TextBlock>
+                                <TextBlock Margin="0">HI</TextBlock>
+                                <TextBlock Margin="0">NCA</TextBlock>
+                                <TextBlock Margin="0">SCA</TextBlock>
+                                <TextBlock Margin="0">STX</TextBlock>
+                                <TextBlock Margin="0">WA</TextBlock>
+                                <TextBlock Margin="0">NCA</TextBlock>
+                            </ComboBox>
+                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                Grid.Column="0"
+                                Content="Save" />
+                            <Button
+                                Grid.Column="1"
+                                Content="Load" />
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel>
+                        <StackPanel>
+                            <Rectangle
+                                Fill="Transparent"
+                                Stroke="Black"
+                                Height="300"
+                                Margin="20" />
+                            <TextBox>8-0</TextBox>
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
             </TabItem.Content>
+
         </TabItem>
     </TabControl>
 </Window>
