@@ -227,7 +227,7 @@
             </TabItem.Header>
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
-                    <Button DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" Click="ButtonDrawGates_OnClick" />
+                    <Button DockPanel.Dock="Bottom" Content="Draw Scissors!" Height="50" Click="ButtonDrawGates_OnClick" />
                     <StackPanel DockPanel.Dock="Left" Width="225">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />

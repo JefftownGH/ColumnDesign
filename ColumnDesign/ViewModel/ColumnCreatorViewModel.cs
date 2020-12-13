@@ -79,7 +79,7 @@ namespace ColumnDesign.ViewModel
             get
             {
                 if (SWidthX.Equals("") || SLengthY.Equals("")) return "";
-                return $"{WidthX}\" x {LengthY}\" SCISSOR CLAMP COLUMN FAB";
+                return $"{SWidthX}\" x {SLengthY}\" SCISSOR CLAMP COLUMN FAB";
             }
             set => _sSheetName = value;
         }
