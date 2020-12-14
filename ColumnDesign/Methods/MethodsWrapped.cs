@@ -1,4 +1,5 @@
-﻿using Autodesk.Revit.UI;
+﻿using System;
+using Autodesk.Revit.UI;
 using ColumnDesign.UI;
 
 namespace ColumnDesign.Methods
@@ -17,9 +18,19 @@ namespace ColumnDesign.Methods
         /// The Execute override void must be present in all methods wrapped by the RevitEventWrapper.
         /// This defines what the method will do when raised externally.
         /// </summary>
-        protected override void Execute(UIApplication uiApp, ColumnCreatorView ui)
+        protected override void Execute(UIApplication uiApp, ColumnCreatorView ui, DrawingTypes drawingType)
         {
-            Methods.CreateSheet(uiApp.ActiveUIDocument.Document, ui);
+            switch (drawingType)
+            {
+                case DrawingTypes.Gates:
+                    Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui);
+                    break;
+                case DrawingTypes.Scissors:
+                    Methods.CreateScissors(uiApp.ActiveUIDocument.Document, ui);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(drawingType), drawingType, null);
+            }
         }
     }
 }

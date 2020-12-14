@@ -1,30 +1,4 @@
 ﻿/*' TO DO LIST
-' Consider using two different sized clamps on high aspect ratio columns
-' Add a reverse button to the plywood layout
-
-
-'All units in inches and pounds
-
-Private Sub Userform_UI()
-    If ClampSizeButton1.Value = True Then
-        ClampSizeButton2.Value = False
-        ClampSizeButton3.Value = False
-        ClampSizeButton4.Value = False
-    ElseIf ClampSizeButton2.Value = True Then
-        ClampSizeButton1.Value = False
-        ClampSizeButton3.Value = False
-        ClampSizeButton4.Value = False
-    ElseIf ClampSizeButton3.Value = True Then
-        ClampSizeButton1.Value = False
-        ClampSizeButton2.Value = False
-        ClampSizeButton4.Value = False
-    ElseIf ClampSizeButton4.Value = True Then
-        ClampSizeButton1.Value = False
-        ClampSizeButton2.Value = False
-        ClampSizeButton3.Value = False
-    End If
-End Sub
-
 
 Private Sub btnRotate_Click()
     If txtViewName.Caption = "Front" Then
@@ -2744,14 +2718,6 @@ Public Function FindMin(Arr As Variant)
     Next i
     FindMin = RetMin
 End Function
-Public Function RoundUp(num As Double) As Integer
-    If num > Int(num) Then
-    num = Int(num) + 1
-    Else
-    num = Int(num)
-    End If
-    RoundUp = num
-End Function
 Public Function RoundDown(num As Double) As Integer
     num = Int(num)
     RoundDown = num
@@ -2879,39 +2845,10 @@ DeadInTheWater:
     MsgBox "A folder could not be created for the following path: " & path & ". Check the path name and try again."
     FolderCreate = False
     Exit Function
-    
 End Function
 
 Private Sub UserForm_Initialize()
-    SheetIssuedForBox.AddItem "PRELIMINARY"
-    SheetIssuedForBox.AddItem "SUBMITTAL REVIEW"
-    SheetIssuedForBox.AddItem "FOR CONSTRUCTION"
-    SheetIssuedForBox.AddItem "OTHER"
-    
-    AreaBox.AddItem "CO"
-    AreaBox.AddItem "HI"
-    AreaBox.AddItem "NCA"
-    AreaBox.AddItem "SCA"
-    AreaBox.AddItem "STX"
-    AreaBox.AddItem "WA"
-    AreaBox.Value = "NCA"
-    
-    sSheetIssuedForBox.AddItem "PRELIMINARY"
-    sSheetIssuedForBox.AddItem "SUBMITTAL REVIEW"
-    sSheetIssuedForBox.AddItem "FOR CONSTRUCTION"
-    sSheetIssuedForBox.AddItem "OTHER"
-    
-    sAreaBox.AddItem "CO"
-    sAreaBox.AddItem "HI"
-    sAreaBox.AddItem "NCA"
-    sAreaBox.AddItem "SCA"
-    sAreaBox.AddItem "STX"
-    sAreaBox.AddItem "WA"
-    sAreaBox.Value = "NCA"
-    
-    DateBox.Value = Left(Now(), InStr(1, Now(), " ")) 'Now() is formatted as "M/D/YYYY H:M:S AM/PM", this truncates it to only what is left of the first space.
-    sDateBox.Value = Left(Now(), InStr(1, Now(), " ")) 'Now() is formatted as "M/D/YYYY H:M:S AM/PM", this truncates it to only what is left of the first space.
-End Sub
+
 
 'Show a warning when plywood is changed from HDO
 Private Sub PlyNameBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)

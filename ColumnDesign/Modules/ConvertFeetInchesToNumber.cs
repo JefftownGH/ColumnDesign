@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace ColumnDesign.Modules
 {
@@ -13,7 +12,8 @@ namespace ColumnDesign.Modules
             var strTemp2 = "";
             var strTemp3 = "";
             var strTemp4 = "";
-            if (stringInput.Equals("") || string.Equals(stringInput, " ") || string.Equals(stringInput, ".")) return 0;
+            if (stringInput == null || stringInput.Equals("") || string.Equals(stringInput, " ") ||
+                string.Equals(stringInput, ".")) return 0;
 
             for (var iCnt0 = 0; iCnt0 < stringInput.Length; iCnt0++)
             {

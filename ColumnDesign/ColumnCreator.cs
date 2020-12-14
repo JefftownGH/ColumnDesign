@@ -17,7 +17,7 @@ namespace ColumnDesign
             }
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = $"{ex.Message}\n{ex.StackTrace}";
                 return Result.Failed;
             }
         }

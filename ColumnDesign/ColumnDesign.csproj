@@ -54,13 +54,13 @@
         <Compile Include="Application.cs" />
         <Compile Include="ColumnCreator.cs" />
         <Compile Include="GlobalNames.cs" />
+        <Compile Include="Methods\DrawingTypes.cs" />
         <Compile Include="Methods\MethodsWrapped.cs" />
         <Compile Include="Methods\RevitEventWrapper.cs" />
         <Compile Include="Modules\AutoName.cs" />
         <Compile Include="Modules\CalcWeight_Function.cs" />
         <Compile Include="Modules\CheckInputs_Function.cs" />
         <Compile Include="Modules\Collection_Function.cs" />
-        <Compile Include="Modules\ColumnCreatorRun.cs" />
         <Compile Include="Modules\ConvertFeetInchesToNumber.cs" />
         <Compile Include="Modules\ConvertNumberToFeetInches.cs" />
         <Compile Include="Modules\GetPlySeams_Function.cs" />
@@ -80,6 +80,7 @@
         </Compile>
         <Compile Include="Methods\Methods.cs" />
         <Compile Include="ViewModel\ColumnCreatorViewModel.cs" />
+        <Compile Include="ViewModel\DrawButtonHandler.cs" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <ItemGroup>

@@ -11,7 +11,7 @@ namespace ColumnDesign.Methods
         private readonly object _lock;
         private TType _savedArgs;
         private readonly ExternalEvent _revitEvent;
-
+        private DrawingTypes _drawingType;
         /// <summary>
         /// Class for wrapping methods for execution within a "valid" Revit API context.
         /// </summary>
@@ -28,14 +28,15 @@ namespace ColumnDesign.Methods
         public void Execute(UIApplication app)
         {
             TType args;
-
+            DrawingTypes drawingType;
             lock (_lock)
             {
                 args = _savedArgs;
+                drawingType = _drawingType;
                 _savedArgs = default;
             }
 
-            Execute(app, args);
+            Execute(app, args, drawingType);
         }
 
         /// <summary>
@@ -51,11 +52,13 @@ namespace ColumnDesign.Methods
         /// Execute the wrapped external event in a valid Revit API context.
         /// </summary>
         /// <param name="args">Arguments that could be passed to the execution method.</param>
-        public void Raise(TType args)
+        /// <param name="drawingTypes"></param>
+        public void Raise(TType args, DrawingTypes drawingTypes)
         {
             lock (_lock)
             {
                 _savedArgs = args;
+                _drawingType = drawingTypes;
             }
 
             _revitEvent.Raise();
@@ -65,7 +68,8 @@ namespace ColumnDesign.Methods
         /// Override void which wraps the "Execution" method in a valid Revit API context.
         /// </summary>
         /// <param name="app">Revit UI Application to use as the "wrapper" API context.</param>
-        /// <param name="args">Arguments that could be passed to the execution method.</param>
-        protected abstract void Execute(UIApplication app, TType args);
+        /// <param name="vm">Arguments that could be passed to the execution method.</param>
+        /// <param name="drawingType">Type of sheet to create</param>
+        protected abstract void Execute(UIApplication app, TType vm, DrawingTypes drawingType);
     }
 }

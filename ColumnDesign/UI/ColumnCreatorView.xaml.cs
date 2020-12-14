@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
@@ -13,33 +14,26 @@ namespace ColumnDesign.UI
     {
         private readonly Document _doc;
         private readonly UIDocument _uiDoc;
-        private readonly EventHandlerWithWpfArg _mExternalMethodWpfArg;
 
         public ColumnCreatorView(UIApplication uiApp, EventHandlerWithWpfArg eExternalMethodWpfArg)
         {
             _uiDoc = uiApp.ActiveUIDocument;
             _doc = _uiDoc.Document;
-            DataContext = new ColumnCreatorViewModel();
+            DataContext = new ColumnCreatorViewModel(eExternalMethodWpfArg, this);
             InitializeComponent();
             InitializeFields();
-            _mExternalMethodWpfArg = eExternalMethodWpfArg;
         }
 
         private void InitializeFields()
         {
-            var now = DateTime.Now.ToString("dd/M/yyyy");
+            var now = DateTime.Now.ToString("dd/M/yyyy", CultureInfo.InvariantCulture);
             Date.Text = now;
             SDate.Text = now;
         }
-
-        private void ButtonDrawGates_OnClick(object sender, RoutedEventArgs e)
-        {
-            _mExternalMethodWpfArg.Raise(this);
-        }
         private void Window_OnChecked(object sender, RoutedEventArgs e)
         {
-            if (WindowY.IsChecked == true) WindowY.IsChecked = false;
-            if (WindowX.IsChecked == true) WindowX.IsChecked = false;
+            if (WindowX.IsChecked == true) WindowY.IsChecked = false;
+            if (WindowY.IsChecked == true) WindowX.IsChecked = false;
             Picking.IsEnabled = false;
             Regular.IsChecked = true;
         }

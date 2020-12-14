@@ -32,7 +32,7 @@ namespace ColumnDesign.Modules
                     : $"{strNeg}{xIn}\"";
             }
 
-            return Math.Round(num - (int) Math.Round(num, 3), 3) != 0
+            return Math.Round(num - (int) (Math.Round(num, 3)), 3) != 0
                 ? $"{strNeg}{xFt}'-{xIn} {xFra}\""
                 : $"{strNeg}{xFt}'-{xIn}\"";
         }

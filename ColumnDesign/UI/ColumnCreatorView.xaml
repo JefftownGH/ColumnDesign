@@ -63,7 +63,44 @@
             </TabItem.Header>
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
-                    <Button DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" Click="ButtonDrawGates_OnClick" />
+                    <Button x:Name="DrawGates" DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" FontSize="28"
+                            Command="{Binding DrawGatesCommand}">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="IsEnabled" Value="False" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Border" Background="White" BorderBrush="Gray"
+                                                    BorderThickness="1">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}" Value="False" />
+                                                        <Condition Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}" Value="False" />
+                                                        <Condition Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}" Value="False" />
+                                                        <Condition Binding="{Binding Path=(Validation.HasError), ElementName=Quantity}" Value="False" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="IsEnabled" Value="True" />
+                                                </MultiDataTrigger>
+                                                <Trigger Property="IsEnabled" Value="True">
+                                                    <Setter TargetName="Border" Property="Background" Value="Blue" />
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Border" Property="Background" Value="White" />
+                                                    <Setter Property="Foreground" Value="Gray" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <StackPanel DockPanel.Dock="Left" Width="225">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />
@@ -75,7 +112,7 @@
                                 <TextBox.Text>
                                     <Binding Path="WidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -89,7 +126,7 @@
                                 <TextBox.Text>
                                     <Binding Path="LengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -103,7 +140,7 @@
                                 <TextBox.Text>
                                     <Binding Path="HeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="8" Max="20" />
+                                            <vm:ValueRangeRule Min="98" Max="240" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -115,7 +152,7 @@
                                 <TextBox.Text>
                                     <Binding Path="Quantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="1" Max="2147483647" />
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -227,7 +264,56 @@
             </TabItem.Header>
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
-                    <Button DockPanel.Dock="Bottom" Content="Draw Scissors!" Height="50" Click="ButtonDrawGates_OnClick" />
+                    <Button DockPanel.Dock="Bottom" Content="Draw Scissors!" Height="50" FontSize="28"
+                            Command="{Binding DrawScissorsCommand}">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="IsEnabled" Value="False" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Border" Background="White" BorderBrush="Gray"
+                                                    BorderThickness="1">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), 
+                                                        ElementName=SWidthX}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), 
+                                                        ElementName=SLengthY}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), 
+                                                        ElementName=SHeightZ}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),
+                                                        ElementName=SQuantity}"
+                                                            Value="False" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="IsEnabled" Value="True" />
+                                                </MultiDataTrigger>
+                                                <Trigger Property="IsEnabled" Value="True">
+                                                    <Setter TargetName="Border" Property="Background" Value="Blue" />
+                                                    <Setter Property="Foreground" Value="Black" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter TargetName="Border" Property="Background" Value="White" />
+                                                    <Setter Property="Foreground" Value="Gray" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <StackPanel DockPanel.Dock="Left" Width="225">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />
@@ -238,7 +324,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SWidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -250,7 +336,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SLengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" />
+                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -262,7 +348,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SHeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="8" Max="20" />
+                                            <vm:ValueRangeRule Min="12" Max="480" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -274,7 +360,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SQuantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="1" Max="2147483647" />
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True"/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
