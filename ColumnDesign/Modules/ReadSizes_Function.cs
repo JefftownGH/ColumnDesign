@@ -31,11 +31,7 @@ namespace ColumnDesign.Modules
                 else tempStr1 += csvPly.Substring(i, 1);
             }
 
-            if (tempStr2.Length >= 11)
-            {
-                //TODO task dialog "Error: Too many ply sheets defined (max: 11)"
-                return new double[] {0};
-            }
+            if (tempStr2.Length >= 11) throw new ArgumentException("Error: Too many ply sheets defined (max: 11)");
 
             Array.Resize(ref tempOutput, tempStr2.Length);
             for (var i = 0; i < tempStr2.Length; i++) tempOutput[i] = ConvertToNum(tempStr2[i]);

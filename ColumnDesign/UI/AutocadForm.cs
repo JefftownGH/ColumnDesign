@@ -22,12 +22,7 @@ Private Sub boxPlySeams_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
 End Sub
 
 Private Sub chkWinX_Click()
-    'MsgBox chkWinX.Value
-    If chkWinY.Value = True Then
-        chkWinY.Value = False
-        chkWinX.Value = True
-    End If
-    
+  
     If chkWinX.Value = True Or chkWinY.Value = True Then
         SquaringCornerOptionRegularButton.Value = True
         SquaringCornerOptionPickingButton.Enabled = False
@@ -41,11 +36,6 @@ Private Sub chkWinX_Click()
     Call UpdatePly.UpdatePly(2) 'Update the plywood layout sketch
 End Sub
 Private Sub chkWinY_Click()
-    'MsgBox chkWinY.Value
-    If chkWinX.Value = True Then
-        chkWinX.Value = False
-        chkWinY.Value = True
-    End If
     
     If chkWinX.Value = True Or chkWinY.Value = True Then
         SquaringCornerOptionRegularButton.Value = True
@@ -789,67 +779,7 @@ ExitPlywoodCheckLoop2:
 '#####################################################################################
 '                                   C L A M P S
 '#####################################################################################
-    'Compute clamp size. Use maximum dimension to pick clamp.
-    '1 = 8"-24",  2 = 12"-36",  3 = 24"-48"
-    Dim clamp_spacing() As Double
-    Dim swing_ang As Double 'Opened clamp angle shown in plan view for display purposes
-    Dim win_clamp_top_max As Double: win_clamp_top_max = 5 'Maximum distance clamp above window seam can be from the seam
-    Dim win_clamp_bot_max As Double: win_clamp_bot_max = 4 'Maximum distance clamp below window seam can be from the seam
-    
-    If ClampSizeButton1.Value = True Then
-        GoTo Clampsize1
-    ElseIf ClampSizeButton2.Value = True Then
-        GoTo Clampsize2
-    ElseIf ClampSizeButton3.Value = True Then
-        GoTo Clampsize3
-    ElseIf ClampSizeButton4.Value = True Then
-        GoTo ClampSizeChoose
-    End If
-    
-    
-    
-ClampSizeChoose:
-    If Round(FindMax(Arr), 3) < 24 Then
-Clampsize1:
-        clamp_size = 1
-        clamp_L = 36
-        clamp_name = "8/24"
-        clamp_block_bk = "VBA_8-24_CLAMP_PLAN_BACK"
-        clamp_block_op = "VBA_8-24_CLAMP_PLAN_OP"
-        clamp_block_pr = "VBA_8-24_CLAMP_PROFILE"
-    ElseIf Round(FindMax(Arr), 3) <= 36 Then
-Clampsize2:
-        clamp_size = 2
-        clamp_L = 48
-        clamp_name = "12/36"
-        clamp_block_bk = "VBA_12-36_CLAMP_PLAN_BACK"
-        clamp_block_op = "VBA_12-36_CLAMP_PLAN_OP"
-        clamp_block_pr = "VBA_12-36_CLAMP_PROFILE"
-    ElseIf Round(FindMax(Arr), 3) <= 48 Then
-Clampsize3:
-        clamp_size = 3
-        clamp_L = 60
-        clamp_name = "24/48"
-        clamp_block_bk = "VBA_24-48_CLAMP_PLAN_BACK"
-        clamp_block_op = "VBA_24-48_CLAMP_PLAN_OP"
-        clamp_block_pr = "VBA_24-48_CLAMP_PROFILE"
-    Else
-        MsgBox ("Error: Column is too wide (>48"""") in one dimension")
-    End If
-    
-    'Convert clamp block names to window specific blocks if needed
-    If window = True Then
-        If WinY = True Then
-            clamp_block_pr = clamp_block_pr & "_FLIPPED"
-        End If
-        clamp_block_op = clamp_block_op & "_WIN"
-        swing_ang = -pi / 4
-    End If
-    
-    'Determine clamp spacing
-    filepath = FileLocationPrefix & "Columns\clamp_matrix.csv"
-    clamp_matrix = ImportMatrix(filepath)
-    
+
     'Find row number corresponding to longer side of column
     If x <= y Then
         long_side = y

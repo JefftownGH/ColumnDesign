@@ -167,10 +167,10 @@
                         <TextBox x:Name="PlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
                         <TextBlock>Clamp size</TextBlock>
                         <StackPanel>
-                            <RadioButton>8-24 Gates</RadioButton>
-                            <RadioButton>24-36 Gates</RadioButton>
-                            <RadioButton>36-48 Gates</RadioButton>
-                            <RadioButton IsChecked="True">Choose by column size</RadioButton>
+                            <RadioButton x:Name="RbColumn824">8-24 Gates</RadioButton>
+                            <RadioButton x:Name="RbColumn2436">24-36 Gates</RadioButton>
+                            <RadioButton x:Name="RbColumn3648">36-48 Gates</RadioButton> 
+                            <RadioButton x:Name="RbColumnCustom" IsChecked="True">Choose by column size</RadioButton>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right">
