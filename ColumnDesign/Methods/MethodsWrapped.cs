@@ -20,16 +20,23 @@ namespace ColumnDesign.Methods
         /// </summary>
         protected override void Execute(UIApplication uiApp, ColumnCreatorView ui, DrawingTypes drawingType)
         {
-            switch (drawingType)
+            try
             {
-                case DrawingTypes.Gates:
-                    Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui);
-                    break;
-                case DrawingTypes.Scissors:
-                    Methods.CreateScissors(uiApp.ActiveUIDocument.Document, ui);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(drawingType), drawingType, null);
+                switch (drawingType)
+                {
+                    case DrawingTypes.Gates:
+                        Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui);
+                        break;
+                    case DrawingTypes.Scissors:
+                        Methods.CreateScissors(uiApp.ActiveUIDocument.Document, ui);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(drawingType), drawingType, null);
+                }
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Error", e.Message);
             }
         }
     }

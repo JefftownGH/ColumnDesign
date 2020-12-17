@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ColumnDesign.Modules
 {
-    public static class ImportMatrix_Function
+    public static class ImportMatrixFunction
     {
         public static int[,] ImportMatrix(string filepath)
         {
@@ -14,7 +14,7 @@ namespace ColumnDesign.Modules
             var returnMatrix = new int[,] { };
             using (var reader = File.OpenText(filepath))
             {
-                var line = "";
+                string line;
                 while ((line = reader.ReadLine()) != null)
                 {
                     myString = line;
@@ -26,7 +26,7 @@ namespace ColumnDesign.Modules
             returnMatrix = ResizeArray<int>(returnMatrix, nRowsTot, tempRow.Length);
             using (var reader = File.OpenText(filepath))
             {
-                var line = "";
+                string line;
                 while ((line = reader.ReadLine()) != null)
                 {
                     myString = line;

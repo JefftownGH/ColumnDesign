@@ -254,24 +254,7 @@ End Function
 '   Other useful functions
 '===============================================================================================================================
 
-Public Function DisableDrawingButtons()
-    'Disable drawing buttons
-    ColumnCreator.CommandButton1.Enabled = False
-    ColumnCreator.CommandButton1.BackColor = &H80000004 'grey
-    ColumnCreator.CommandButton1.ForeColor = &H80000000 'background grey
-    ColumnCreator.CommandButton1.Enabled = False
-    ColumnCreator.CommandButton1.BackColor = &H80000004 'grey
-    ColumnCreator.CommandButton1.ForeColor = &H80000000 'background grey
-End Function
-Public Function EnableDrawingButtons()
-    'Enable drawing buttons
-    ColumnCreator.CommandButton1.Enabled = True
-    ColumnCreator.CommandButton1.BackColor = &H8000000D 'blue
-    ColumnCreator.CommandButton1.ForeColor = &H80000012 'black
-    ColumnCreator.CommandButton1.Enabled = True
-    ColumnCreator.CommandButton1.BackColor = &H8000000D 'blue
-    ColumnCreator.CommandButton1.ForeColor = &H80000012 'black
-End Function
+
 Public Function ValidatePlySeams(ply_seams() As Double, x As Double, y As Double, z As Double) As Integer
 'Returns 0: not valid
 'Returns 1: valid

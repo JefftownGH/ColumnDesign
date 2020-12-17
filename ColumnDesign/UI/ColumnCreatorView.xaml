@@ -6,9 +6,9 @@
         xmlns:vm="clr-namespace:ColumnDesign.ViewModel"
         mc:Ignorable="d"
         Title="ColumnCreator"
-        Height="550"
+        Height="560"
         Width="750"
-        MinHeight="550"
+        MinHeight="560"
         MinWidth="750"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance vm:ColumnCreatorViewModel }">
@@ -79,10 +79,18 @@
                                             <ControlTemplate.Triggers>
                                                 <MultiDataTrigger>
                                                     <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}" Value="False" />
-                                                        <Condition Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}" Value="False" />
-                                                        <Condition Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}" Value="False" />
-                                                        <Condition Binding="{Binding Path=(Validation.HasError), ElementName=Quantity}" Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
+                                                            Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), ElementName=Quantity}"
+                                                            Value="False" />
                                                     </MultiDataTrigger.Conditions>
                                                     <Setter Property="IsEnabled" Value="True" />
                                                 </MultiDataTrigger>
@@ -112,12 +120,14 @@
                                 <TextBox.Text>
                                     <Binding Path="WidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
-                            <CheckBox x:Name="WindowX" Margin="10,0,0,0" Checked="Window_OnChecked"
+                            <CheckBox x:Name="WindowX" Margin="10,0,0,0"
+                                      IsChecked="{Binding WindowX}"
+                                      Checked="Window_OnChecked"
                                       Unchecked="Window_OnUnchecked" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -126,12 +136,14 @@
                                 <TextBox.Text>
                                     <Binding Path="LengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
                             </TextBox>
-                            <CheckBox x:Name="WindowY" Margin="10,0,0,0" Checked="Window_OnChecked"
+                            <CheckBox x:Name="WindowY" Margin="10,0,0,0"
+                                      IsChecked="{Binding WindowY}"
+                                      Checked="Window_OnChecked"
                                       Unchecked="Window_OnUnchecked" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -140,7 +152,7 @@
                                 <TextBox.Text>
                                     <Binding Path="HeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="98" Max="240" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="98" Max="240" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -152,7 +164,7 @@
                                 <TextBox.Text>
                                     <Binding Path="Quantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -164,14 +176,20 @@
                             <RadioButton x:Name="Picking" Margin="20,0,0,0" IsChecked="True">Picking</RadioButton>
                         </StackPanel>
                         <TextBlock>Plywood type</TextBlock>
-                        <TextBox x:Name="PlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
+                        <TextBox x:Name="PlywoodType" Text="{Binding PlywoodType, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="100" HorizontalAlignment="Left" />
                         <TextBlock>Clamp size</TextBlock>
                         <StackPanel>
                             <RadioButton x:Name="RbColumn824">8-24 Gates</RadioButton>
                             <RadioButton x:Name="RbColumn2436">24-36 Gates</RadioButton>
-                            <RadioButton x:Name="RbColumn3648">36-48 Gates</RadioButton> 
+                            <RadioButton x:Name="RbColumn3648">36-48 Gates</RadioButton>
                             <RadioButton x:Name="RbColumnCustom" IsChecked="True">Choose by column size</RadioButton>
                         </StackPanel>
+                        <TextBlock
+                            x:Name="PlywoodError"
+                            Visibility="{Binding PlywoodType, Converter={vm:CheckPlywoodVisibilityConverter}}"
+                            Text="Check number of uses if not&#x0a;using HDO plywood!" HorizontalAlignment="Left"
+                            Foreground="Red" />
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right">
                         <StackPanel Orientation="Horizontal">
@@ -189,7 +207,8 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Date</TextBlock>
-                            <TextBox x:Name="Date" Width="200">12/03/20</TextBox>
+                            <TextBox x:Name="Date" Width="200"
+                                     Text="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock>Sheet issued for...</TextBlock>
@@ -245,16 +264,31 @@
                                 Content="Load" />
                         </Grid>
                     </StackPanel>
-                    <StackPanel>
-                        <StackPanel>
-                            <Rectangle
-                                Fill="Transparent"
-                                Stroke="Black"
-                                Height="300"
-                                Margin="20" />
-                            <TextBox>8-0</TextBox>
+                    <DockPanel LastChildFill="True">
+                        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+                            <TextBlock x:Name="WinDim1" Margin="0,0,0,200">
+                                <TextBlock.Visibility>
+                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
+                                        <Binding Path="WindowX" />
+                                        <Binding Path="WindowY" />
+                                    </MultiBinding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
+                            <TextBlock x:Name="WinDim2">
+                                <TextBlock.Visibility>
+                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
+                                        <Binding Path="WindowX" />
+                                        <Binding Path="WindowY" />
+                                    </MultiBinding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
                         </StackPanel>
-                    </StackPanel>
+                        <TextBox DockPanel.Dock="Bottom" x:Name="SBoxPlySeams" />
+                        <Rectangle
+                            Fill="Transparent"
+                            Stroke="Black"
+                            Margin="20" />
+                    </DockPanel>
                 </DockPanel>
             </TabItem.Content>
         </TabItem>
@@ -265,6 +299,7 @@
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
                     <Button DockPanel.Dock="Bottom" Content="Draw Scissors!" Height="50" FontSize="28"
+                            x:Name="DrawScissors"
                             Command="{Binding DrawScissorsCommand}">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -324,7 +359,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SWidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -336,7 +371,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SLengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="8" Max="46" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -348,7 +383,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SHeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="12" Max="480" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="12" Max="480" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -360,7 +395,7 @@
                                 <TextBox.Text>
                                     <Binding Path="SQuantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True"/>
+                                            <vm:ValueRangeRule Min="1" Max="2147483647" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -464,7 +499,6 @@
                     </StackPanel>
                 </DockPanel>
             </TabItem.Content>
-
         </TabItem>
     </TabControl>
 </Window>

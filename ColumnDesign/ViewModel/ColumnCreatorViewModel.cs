@@ -1,9 +1,11 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
-using Autodesk.Revit.DB;
 using ColumnDesign.Annotations;
 using ColumnDesign.Methods;
 using ColumnDesign.UI;
@@ -21,8 +23,18 @@ namespace ColumnDesign.ViewModel
         private string _sSheetName;
         private string _sWidthX;
         private string _sLengthY;
+        private string _heightZ;
+        private string _sHeightZ;
         private string _quantity;
         private string _sQuantity;
+        private bool _windowX;
+        private bool _windowY;
+        private string _plywoodType;
+        private string _date;
+        private string _sDate;
+        private ICommand _drawGatesCommand;
+        private ICommand _drawScissorsCommand;
+
         public string WidthX
         {
             get => _widthX;
@@ -67,9 +79,26 @@ namespace ColumnDesign.ViewModel
             }
         }
 
-        public string HeightZ { get; set; }
-        public string SHeightZ { get; set; }
-        
+        public string HeightZ
+        {
+            get => _heightZ;
+            set
+            {
+                _heightZ = value;
+                OnPropertyChanged(nameof(HeightZ));
+            }
+        }
+
+        public string SHeightZ
+        {
+            get => _sHeightZ;
+            set
+            {
+                _sHeightZ = value;
+                OnPropertyChanged(nameof(SHeightZ));
+            }
+        }
+
 
         public string Quantity
         {
@@ -81,8 +110,6 @@ namespace ColumnDesign.ViewModel
             }
         }
 
-        
-
         public string SQuantity
         {
             get => _sQuantity;
@@ -93,8 +120,59 @@ namespace ColumnDesign.ViewModel
             }
         }
 
-        private ICommand _drawGatesCommand;
-        private ICommand _drawScissorsCommand;
+        public string PlywoodType
+        {
+            get => _plywoodType;
+            set
+            {
+                _plywoodType = value;
+                OnPropertyChanged(nameof(PlywoodType));
+            }
+        }
+
+        public bool WindowX
+        {
+            get => _windowX;
+            set
+            {
+                _windowY = false;
+                _windowX = value;
+                OnPropertyChanged(nameof(WindowX));
+                OnPropertyChanged(nameof(WindowY));
+            }
+        }
+
+        public bool WindowY
+        {
+            get => _windowY;
+            set
+            {
+                _windowX = false;
+                _windowY = value;
+                OnPropertyChanged(nameof(WindowY));
+                OnPropertyChanged(nameof(WindowX));
+            }
+        }
+
+        public string Date
+        {
+            get => _date;
+            set
+            {
+                _date = value;
+                OnPropertyChanged(nameof(Date));
+            }
+        }
+
+        public string SDate
+        {
+            get => _sDate;
+            set
+            {
+                _sDate = value;
+                OnPropertyChanged(nameof(SDate));
+            }
+        }
 
         public ColumnCreatorViewModel(EventHandlerWithWpfArg eExternalMethodWpfArg, ColumnCreatorView view)
         {
@@ -133,7 +211,11 @@ namespace ColumnDesign.ViewModel
                 if (WidthX.Equals("") || LengthY.Equals("")) return "";
                 return $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" GATES COLUMN FORM";
             }
-            set => _sheetName = value;
+            set
+            {
+                _sheetName = value;
+                OnPropertyChanged(nameof(SheetName));
+            }
         }
 
         public string SSheetName
@@ -143,8 +225,13 @@ namespace ColumnDesign.ViewModel
                 if (SWidthX.Equals("") || SLengthY.Equals("")) return "";
                 return $"{ConvertToNum(SWidthX)}\" x {ConvertToNum(SLengthY)}\" SCISSOR CLAMP COLUMN FAB";
             }
-            set => _sSheetName = value;
+            set
+            {
+                _sSheetName = value;
+                OnPropertyChanged(nameof(SSheetName));
+            }
         }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -159,13 +246,14 @@ namespace ColumnDesign.ViewModel
     {
         public int Min { get; set; }
         public int Max { get; set; }
-        
+
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (value == null || ((string) value).Length == 0)
             {
                 return new ValidationResult(false, $"Please enter value in the range: {Min}-{Max}.");
             }
+
             var val = ConvertToNum((string) value);
             if (val == 0d)
             {
@@ -178,6 +266,55 @@ namespace ColumnDesign.ViewModel
             }
 
             return ValidationResult.ValidResult;
+        }
+    }
+
+    [ValueConversion(typeof(string), typeof(Visibility))]
+    public class CheckPlywoodVisibilityConverter : System.Windows.Markup.MarkupExtension, IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            return value switch
+            {
+                "HDO" => Visibility.Hidden,
+                _ => Visibility.Visible
+            };
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            return null;
+        }
+
+        public override object ProvideValue(IServiceProvider serviceProvider)
+        {
+            return this;
+        }
+    }
+
+    [ValueConversion(typeof(bool), typeof(Visibility))]
+    public class WinDimSeamsVisibilityConverter : System.Windows.Markup.MarkupExtension, IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            foreach (var value in values)
+            {
+                if (value is not bool isVisible) break;
+                if (isVisible) return Visibility.Visible;
+            }
+
+            return Visibility.Collapsed;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            return null;
+        }
+
+        public override object ProvideValue(IServiceProvider serviceProvider)
+        {
+            return this;
         }
     }
 }

@@ -14,12 +14,14 @@ namespace ColumnDesign.UI
     {
         private readonly Document _doc;
         private readonly UIDocument _uiDoc;
+        private readonly ColumnCreatorViewModel _vm;
 
         public ColumnCreatorView(UIApplication uiApp, EventHandlerWithWpfArg eExternalMethodWpfArg)
         {
             _uiDoc = uiApp.ActiveUIDocument;
             _doc = _uiDoc.Document;
-            DataContext = new ColumnCreatorViewModel(eExternalMethodWpfArg, this);
+            _vm = new ColumnCreatorViewModel(eExternalMethodWpfArg, this);
+            DataContext = _vm;
             InitializeComponent();
             InitializeFields();
         }
@@ -27,13 +29,12 @@ namespace ColumnDesign.UI
         private void InitializeFields()
         {
             var now = DateTime.Now.ToString("dd/M/yyyy", CultureInfo.InvariantCulture);
-            Date.Text = now;
-            SDate.Text = now;
+            _vm.Date = now;
+            _vm.SDate = now;
+            _vm.PlywoodType = "HDO";
         }
         private void Window_OnChecked(object sender, RoutedEventArgs e)
         {
-            if (WindowX.IsChecked == true) WindowY.IsChecked = false;
-            if (WindowY.IsChecked == true) WindowX.IsChecked = false;
             Picking.IsEnabled = false;
             Regular.IsChecked = true;
         }

@@ -58,13 +58,11 @@
         <Compile Include="Methods\MethodsWrapped.cs" />
         <Compile Include="Methods\RevitEventWrapper.cs" />
         <Compile Include="Modules\CalcWeight_Function.cs" />
-        <Compile Include="Modules\Collection_Function.cs" />
         <Compile Include="Modules\ConvertFeetInchesToNumber.cs" />
         <Compile Include="Modules\ConvertNumberToFeetInches.cs" />
         <Compile Include="Modules\GetPlySeams_Function.cs" />
         <Compile Include="Modules\ImportMatrix_Function.cs" />
         <Compile Include="Modules\ReadSizes_Function.cs" />
-        <Compile Include="Modules\SetNewColumnStyles_Function.cs" />
         <Compile Include="Modules\sUpdatePly.cs" />
         <Compile Include="Modules\UpdatePly.cs" />
         <Compile Include="Modules\zScissorClampModule.cs" />
@@ -92,6 +90,9 @@
     <ItemGroup>
         <CopyItems Include="$(TargetDir)\*.dll" />
         <CopyItems Include="$(TargetDir)\*.addin" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="App.config" />
     </ItemGroup>
     <Target Name="AfterBuild">
         <Copy SourceFiles="@(CopyItems)" DestinationFolder="$(AppData)\Autodesk\Revit\Addins\2019" />
