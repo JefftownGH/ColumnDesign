@@ -208,7 +208,10 @@ namespace ColumnDesign.ViewModel
         {
             get
             {
-                if (WidthX.Equals("") || LengthY.Equals("")) return "";
+                if (WidthX == null) return "";
+                if (LengthY == null) return "";
+                if (WidthX.Equals("")) return "";
+                if (LengthY.Equals("")) return "";
                 return $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" GATES COLUMN FORM";
             }
             set
@@ -222,7 +225,10 @@ namespace ColumnDesign.ViewModel
         {
             get
             {
-                if (SWidthX.Equals("") || SLengthY.Equals("")) return "";
+                if (SWidthX == null) return "";
+                if (SLengthY == null) return "";
+                if (SWidthX.Equals("")) return "";
+                if (SLengthY.Equals("")) return "";
                 return $"{ConvertToNum(SWidthX)}\" x {ConvertToNum(SLengthY)}\" SCISSOR CLAMP COLUMN FAB";
             }
             set

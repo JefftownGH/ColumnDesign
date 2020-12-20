@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:ColumnDesign.ViewModel"
         mc:Ignorable="d"
         Title="ColumnCreator"
-        Height="560"
+        Height="50"
         Width="750"
         MinHeight="560"
         MinWidth="750"
@@ -266,7 +266,7 @@
                     </StackPanel>
                     <DockPanel LastChildFill="True">
                         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                            <TextBlock x:Name="WinDim1" Margin="0,0,0,200">
+                            <TextBlock x:Name="WinDim1" Margin="0,0,0,200" Foreground="Blue">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
                                         <Binding Path="WindowX" />
@@ -274,7 +274,7 @@
                                     </MultiBinding>
                                 </TextBlock.Visibility>
                             </TextBlock>
-                            <TextBlock x:Name="WinDim2">
+                            <TextBlock x:Name="WinDim2" Foreground="Blue">
                                 <TextBlock.Visibility>
                                     <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
                                         <Binding Path="WindowX" />
@@ -283,7 +283,14 @@
                                 </TextBlock.Visibility>
                             </TextBlock>
                         </StackPanel>
-                        <TextBox DockPanel.Dock="Bottom" x:Name="SBoxPlySeams" />
+                     
+                        <TextBox x:Name="BoxPlySeams"  DockPanel.Dock="Bottom"/>
+                        <TextBlock
+                            DockPanel.Dock="Bottom"
+                            x:Name="TxtPlyError"
+                            Visibility="Collapsed"
+                            Text="Error" HorizontalAlignment="Left"
+                            Foreground="Red" />
                         <Rectangle
                             Fill="Transparent"
                             Stroke="Black"

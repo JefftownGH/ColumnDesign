@@ -2,8 +2,11 @@
 using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
+using ColumnDesign.Modules;
 using ColumnDesign.UI;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.ImportMatrixFunction;
+using static ColumnDesign.Modules.ReadSizesFunction;
 using static ColumnDesign.Modules.ImportMatrixFunction;
 
 namespace ColumnDesign.Methods
@@ -79,42 +82,130 @@ namespace ColumnDesign.Methods
             WinY = _ui.WindowY.IsChecked == true;
             if (WinX || WinY) window = true;
             WinPos = ConvertToNum(_ui.WinDim2.Text);
-            WinGap = 6    ;
+            WinGap = 6;
             WinStudOff = 1;
             int[,] stud_matrix;
             var ply_thk = 0.75;
             var chamf_thk = 0.75;
             var min_stud_gap = 2.125;
-            var max_wt_single_top  = 2000 ;
-            var stud_base_gap  = 0.25;
-            double bot_clamp_gap  = 8;
-            var stud_start_offset  = 0.125;
-            
+            var max_wt_single_top = 2000;
+            var stud_base_gap = 0.25;
+            double bot_clamp_gap = 8;
+            var stud_start_offset = 0.125;
+
             x = ConvertToNum(_ui.WidthX.Text);
-            y =  ConvertToNum(_ui.LengthY.Text);
-            z =  ConvertToNum(_ui.HeightZ.Text);
+            y = ConvertToNum(_ui.LengthY.Text);
+            z = ConvertToNum(_ui.HeightZ.Text);
             n_col = (int) ConvertToNum(_ui.Quantity.Text);
             // ply_name = ColumnCreator.PlyNameBox
             if (WinX)
             {
-                x= ConvertToNum(_ui.LengthY.Text);
-                y=ConvertToNum(_ui.WidthX.Text);
+                x = ConvertToNum(_ui.LengthY.Text);
+                y = ConvertToNum(_ui.WidthX.Text);
                 WinX = false;
                 WinY = true;
             }
-            //TODO other  code
-                
+
+            if (z < 16 * 12)
+            {
+                stud_type = 1;
+                stud_name = "2X4";
+                stud_name_full = "2X4";
+                stud_block = "VBA_2X4";
+                stud_block_spax = "VBA_2X4_SPAX";
+                stud_block_bolt = "VBA_2X4_BOLT";
+                stud_face_block = "VBA_2X4_FACE";
+            }
+            else if (z > 16 * 12)
+            {
+                stud_type = 2;
+                stud_name = "LVL";
+                stud_name_full = "1.5\" X 3.5\" LVL";
+                stud_block = "VBA_LVL";
+                stud_block_spax = "VBA_LVL_SPAX";
+                stud_block_bolt = "VBA_LVL_BOLT";
+                stud_face_block = "VBA_LVL_FACE";
+            }
+            else
+            {
+                throw new Exception("Error: Invalid stud type.");
+            }
+
+            string stud_block_bolt_hidden;
+            string stud_block_spax_hidden;
+
+            if (window)
+            {
+                stud_block_spax_hidden = stud_block_spax + "_HIDDEN";
+                stud_block_bolt_hidden = stud_block_bolt + "_HIDDEN";
+            }
+
+            if (window && (z - WinPos) > 48)
+            {
+                var dialog = new TaskDialog("Warning")
+                {
+                    MainContent = "Pour window exceeds 48\" in height. This is allowed but not recommended",
+                    AllowCancellation = true,
+                    CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel
+                };
+                if (dialog.Show() == TaskDialogResult.Cancel) return;
+            }
+
+            if (window && _ui.Picking.IsChecked == true)
+            {
+                var dialog = new TaskDialog("Warning")
+                {
+                    MainContent =
+                        "You specified a picking loop instead of a regular squaring corner to be used and you have a pour window. The picking loop will be removed from 1 corner to allow the gates clamp to swing open",
+                    AllowCancellation = true,
+                    CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel
+                };
+                if (dialog.Show() == TaskDialogResult.Cancel) return;
+            }
+
+            if (_ui.Picking.IsChecked == true && (x < 14 || y < 14))
+            {
+                throw new Exception(
+                    "Columns with a side <14'' use regular squaring corners rotated 180 degrees. Picking loop squaring corners cannot be rotated 180 degrees.");
+            }
+
+            if (((int) x - x) != 0 || ((int) y - y) != 0)
+            {
+                var dialog = new TaskDialog("Warning")
+                {
+                    MainContent =
+                        "Column plan dimensions are not divisible by 1 inch. Gates clamps have holes spaced 1 inch on center\nDo you know what you're doing?",
+                    AllowCancellation = true,
+                    CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
+                };
+                if (dialog.Show() == TaskDialogResult.No) return;
+            }
+
+            if (x < 14 || y < 14)
+            {
+                SQ_NAME = "VBA_GATES_SQUARING_CORNER_INV";
+                SQ_NAME_SLINGS = "VBA_GATES_SQUARING_CORNER_INV";
+            }
+            else
+            {
+                SQ_NAME = "VBA_GATES_SQUARING_CORNER";
+                SQ_NAME_SLINGS = "VBA_GATES_SQUARING_CORNER_SLINGS";
+            }
+
+            double[] insertionPnt = new double[2];
+
+
             // #####################################################################################
             //                                                                                           S T U D S
             // #####################################################################################
-            var row_num = 0;
+            int row_num = 0;
             int col_num_x = 0;
             int col_num_y = 0;
             int n_studs_total;
             stud_matrix = ImportMatrix(@$"{GlobalNames.WtFileLocationPrefix}Columns\n_stud_matrix.csv");
             for (var i = 0; i < stud_matrix.GetLength(0); i++)
             {
-                if (stud_matrix[i,0]>z)
+                if (stud_matrix[i, 0] > z)
                 {
                     row_num = i;
                     break;
@@ -123,7 +214,7 @@ namespace ColumnDesign.Methods
 
             for (var i = 0; i < stud_matrix.GetLength(1); i++)
             {
-                if (stud_matrix[0,i]==x)
+                if (stud_matrix[0, i] == x)
                 {
                     col_num_x = i;
                     break;
@@ -132,20 +223,20 @@ namespace ColumnDesign.Methods
 
             for (var i = 0; i < stud_matrix.GetLength(1); i++)
             {
-                if (stud_matrix[0,i]==y)
+                if (stud_matrix[0, i] == y)
                 {
                     col_num_y = i;
                     break;
                 }
             }
 
-            if (col_num_x==0)
+            if (col_num_x == 0)
             {
                 for (var i = 0; i < stud_matrix.GetLength(1); i++)
                 {
-                    if (stud_matrix[0,i]>x)
+                    if (stud_matrix[0, i] > x)
                     {
-                        if (stud_matrix[row_num,i]>=stud_matrix[row_num,i-1])
+                        if (stud_matrix[row_num, i] >= stud_matrix[row_num, i - 1])
                         {
                             col_num_x = i;
                             break;
@@ -159,13 +250,13 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            if (col_num_y==0)
+            if (col_num_y == 0)
             {
                 for (var i = 0; i < stud_matrix.GetLength(1); i++)
                 {
-                    if (stud_matrix[0,i]>y)
+                    if (stud_matrix[0, i] > y)
                     {
-                        if (stud_matrix[row_num,i]>=stud_matrix[row_num,i-1])
+                        if (stud_matrix[row_num, i] >= stud_matrix[row_num, i - 1])
                         {
                             col_num_y = i;
                             break;
@@ -178,151 +269,195 @@ namespace ColumnDesign.Methods
                     }
                 }
             }
+
             n_studs_x = stud_matrix[row_num, col_num_x];
             n_studs_y = stud_matrix[row_num, col_num_y];
             n_studs_total = n_studs_x * 2 + n_studs_y * 2;
-            
-           double avg_gap_x;
-           double avg_gap_y;
-           double push_studs_x = 0;
-           int push_studs_y = 0;
-           avg_gap_x = (x + ply_thk - stud_start_offset - n_studs_x * 3.5) / (n_studs_x - 1);
-           if (avg_gap_x<min_stud_gap)
-           {
-               push_studs_x = 1;
-           }
-           avg_gap_y = (y + ply_thk - stud_start_offset - n_studs_y * 3.5) / (n_studs_y - 1);
-           if (avg_gap_y<min_stud_gap)
-           {
-               push_studs_y = 1;
-           }
-           double[] stud_spacing_x=new double[n_studs_x-1];
-           double[] stud_spacing_y=new double[n_studs_y-1];
-           double available_2x2_x;
-           double available_2x2_y;
-           double min_2x2_gap = 1.625;
-           int AFB_x2;
-           for (var i = 0; i < n_studs_x; i++)
-           {
-               stud_spacing_x[i] = stud_start_offset + (i - 1) * (3.5 + avg_gap_x);
-           }
 
-           for (var i = 0; i < n_studs_y; i++)
-           {
-               stud_spacing_y[i] = stud_start_offset + (i - 1) * (3.5 + avg_gap_y);
-           }
+            double avg_gap_x;
+            double avg_gap_y;
+            double push_studs_x = 0;
+            int push_studs_y = 0;
+            avg_gap_x = (x + ply_thk - stud_start_offset - n_studs_x * 3.5) / (n_studs_x - 1);
+            if (avg_gap_x < min_stud_gap)
+            {
+                push_studs_x = 1;
+            }
 
-           if (push_studs_x==1)
-           {
-               if (avg_gap_x * (n_studs_x - 1) >= 2 * min_stud_gap)
-               {
-                   stud_spacing_x[1] = stud_start_offset + 3.5 + min_stud_gap;
-                   stud_spacing_x[stud_spacing_x.Length - 2] = stud_spacing_x[stud_spacing_x.Length - 1] - 3.5 - min_stud_gap;
-                   AFB_x2 = 1;
-               }
-               else
-               {
-                   stud_spacing_x[stud_spacing_x.Length - 2] = stud_spacing_x[stud_spacing_x.Length - 1] - 3.5 - min_stud_gap;
-                   AFB_x2 = 0;
-               }
-           }
+            avg_gap_y = (y + ply_thk - stud_start_offset - n_studs_y * 3.5) / (n_studs_y - 1);
+            if (avg_gap_y < min_stud_gap)
+            {
+                push_studs_y = 1;
+            }
 
-           if (push_studs_y==1)
-           {
-               if (avg_gap_y * (n_studs_y - 1) >= 2 * min_stud_gap)
-               {
-                   stud_spacing_y[1] = stud_start_offset + 3.5 + min_stud_gap;
-                   stud_spacing_y[stud_spacing_y.Length - 2] = stud_spacing_y[stud_spacing_y.Length-1] - 3.5 - min_stud_gap;
-               }
-               else
-               {
-                   stud_spacing_y[stud_spacing_y.Length - 2] = stud_spacing_y[stud_spacing_y.Length-1] - 3.5 - min_stud_gap;
-               }
-           }
+            double[] stud_spacing_x = new double[n_studs_x - 1];
+            double[] stud_spacing_y = new double[n_studs_y - 1];
+            double available_2x2_x;
+            double available_2x2_y;
+            double min_2x2_gap = 1.625;
+            int AFB_x2;
+            for (var i = 0; i < n_studs_x - 1; i++)
+            {
+                stud_spacing_x[i] = stud_start_offset + i * (3.5 + avg_gap_x);
+            }
 
-           for (var i = 0; i < n_studs_x-1; i++)
-           {
-               if (stud_spacing_x[i+1]-stud_spacing_x[i]<3.5)
-               {
-                   stud_spacing_x[i] = stud_spacing_x[i + 1] - 3.5;
-               }
-           }
-           for (var i = 0; i < n_studs_y-1; i++)
-           {
-               if (stud_spacing_y[i+1]-stud_spacing_y[i]<3.5)
-               {
-                   stud_spacing_y[i] = stud_spacing_y[i + 1] - 3.5;
-               }
-           }
+            for (var i = 0; i < n_studs_y - 1; i++)
+            {
+                stud_spacing_y[i] = stud_start_offset + i * (3.5 + avg_gap_y);
+            }
 
-           for (var i = 0; i < n_studs_x-1; i++)
-           {
-               if (stud_spacing_x[i+1]-stud_spacing_x[i]<3.5)
-               {
-                   TaskDialog.Show("Error","Error: Studs overlap, check and manually correct drawing.");
-                   goto EndOfStudChecks;
-               }
-           }
-           for (var i = 0; i < n_studs_y-1; i++)
-           {
-               if (stud_spacing_y[i+1]-stud_spacing_y[i]<3.5)
-               {
-                   TaskDialog.Show("Error","Error: Studs overlap, check and manually correct drawing.");
-                   goto EndOfStudChecks;
-               }
-           }
+            if (push_studs_x == 1)
+            {
+                if (avg_gap_x * (n_studs_x - 1) >= 2 * min_stud_gap)
+                {
+                    stud_spacing_x[1] = stud_start_offset + 3.5 + min_stud_gap;
+                    stud_spacing_x[stud_spacing_x.Length - 2] =
+                        stud_spacing_x[stud_spacing_x.Length - 1] - 3.5 - min_stud_gap;
+                    AFB_x2 = 1;
+                }
+                else
+                {
+                    stud_spacing_x[stud_spacing_x.Length - 2] =
+                        stud_spacing_x[stud_spacing_x.Length - 1] - 3.5 - min_stud_gap;
+                    AFB_x2 = 0;
+                }
+            }
 
-           if (window)
-           {
-               for (var i = 0; i < n_studs_x-1; i++)
-               {
-                   if (stud_spacing_x[i+1]-stud_spacing_x[i]<5)
-                   {
-                       TaskDialog.Show("Error",
-                           "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
-                       goto EndOfStudChecks;
-                   }
-               }
-               for (var i = 0; i < n_studs_y-1; i++)
-               {
-                   if (stud_spacing_y[i+1]-stud_spacing_y[i]<5)
-                   {
-                       TaskDialog.Show("Error",
-                           "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
-                       goto EndOfStudChecks;
-                   }
-               }
-           }
-           EndOfStudChecks:
+            if (push_studs_y == 1)
+            {
+                if (avg_gap_y * (n_studs_y - 1) >= 2 * min_stud_gap)
+                {
+                    stud_spacing_y[1] = stud_start_offset + 3.5 + min_stud_gap;
+                    stud_spacing_y[stud_spacing_y.Length - 2] =
+                        stud_spacing_y[stud_spacing_y.Length - 1] - 3.5 - min_stud_gap;
+                }
+                else
+                {
+                    stud_spacing_y[stud_spacing_y.Length - 2] =
+                        stud_spacing_y[stud_spacing_y.Length - 1] - 3.5 - min_stud_gap;
+                }
+            }
 
-           // #####################################################################################
-           //                                                                                  P L Y W O O D
-           // #####################################################################################
-           
-           double ply_width_x;
+            for (var i = 0; i < n_studs_x - 2; i++)
+            {
+                if (stud_spacing_x[i + 1] - stud_spacing_x[i] < 3.5)
+                {
+                    stud_spacing_x[i] = stud_spacing_x[i + 1] - 3.5;
+                }
+            }
+
+            for (var i = 0; i < n_studs_y - 2; i++)
+            {
+                if (stud_spacing_y[i + 1] - stud_spacing_y[i] < 3.5)
+                {
+                    stud_spacing_y[i] = stud_spacing_y[i + 1] - 3.5;
+                }
+            }
+
+            for (var i = 0; i < n_studs_x - 2; i++)
+            {
+                if (stud_spacing_x[i + 1] - stud_spacing_x[i] < 3.5)
+                {
+                    TaskDialog.Show("Error", "Error: Studs overlap, check and manually correct drawing.");
+                    goto EndOfStudChecks;
+                }
+            }
+
+            for (var i = 0; i < n_studs_y - 2; i++)
+            {
+                if (stud_spacing_y[i + 1] - stud_spacing_y[i] < 3.5)
+                {
+                    TaskDialog.Show("Error", "Error: Studs overlap, check and manually correct drawing.");
+                    goto EndOfStudChecks;
+                }
+            }
+
+            if (window)
+            {
+                for (var i = 0; i < n_studs_x - 2; i++)
+                {
+                    if (stud_spacing_x[i + 1] - stud_spacing_x[i] < 5)
+                    {
+                        TaskDialog.Show("Error",
+                            "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        goto EndOfStudChecks;
+                    }
+                }
+
+                for (var i = 0; i < n_studs_y - 2; i++)
+                {
+                    if (stud_spacing_y[i + 1] - stud_spacing_y[i] < 5)
+                    {
+                        TaskDialog.Show("Error",
+                            "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        goto EndOfStudChecks;
+                    }
+                }
+            }
+
+            EndOfStudChecks:
+
+            // #####################################################################################
+            //                                                                                  P L Y W O O D
+            // #####################################################################################
+
+            double ply_width_x;
             double ply_width_y;
             int ply_bot_n;
             double ply_top_ht_min = 6;
             double max_ply_ht;
             var ply_seams = new double[1];
             var ply_seams_win = new double[1];
-            //TODO PLYWOOD
+
+            ply_seams = ReadSizes(_ui.BoxPlySeams.Text);
+            ply_seams_win = ReadSizes(_ui.BoxPlySeams.Text);
+            if (UpdatePly.ValidatePlySeams(_ui, ply_seams, x, y, z) == 0)
+            {
+                throw new Exception("Plywood layout invalid. You should never see this message...How did you do this?");
+            }
+
+            var temp_1 = 0d;
+
+            for (var i = 0; i < ply_seams.Length; i++)
+            {
+                temp_1 += ply_seams[i];
+                if (Math.Round(temp_1, 3) == Math.Round(WinPos, 3))
+                {
+                    break;
+                }
+                else if (temp_1 > WinPos)
+                {
+                    ply_seams_win[i] -= temp_1 - WinPos;
+                    Array.Resize(ref ply_seams_win, ply_seams.Length + 1);
+                    ply_seams_win[i + 1] = ply_seams[i] - ply_seams_win[i];
+                    if (i < ply_seams.Length - 1)
+                    {
+                        for (var j = 0; j < ply_seams.Length; j++)
+                        {
+                            ply_seams_win[j + 1] = ply_seams[j];
+                        }
+                    }
+
+                    break;
+                }
+            }
+
             ply_width_x = x + 1.5;
             ply_width_y = y + 1.5;
             int n_studs_w;
-            double ply_width_w=0;
+            double ply_width_w = 0;
             double[] stud_spacing_w = new double[0];
             int n_studs_e;
-            double ply_width_e=0;
-            double[] stud_spacing_e= new double[0];
+            double ply_width_e = 0;
+            double[] stud_spacing_e = new double[0];
             if (WinX)
             {
                 n_studs_w = n_studs_x;
                 n_studs_e = n_studs_x;
                 ply_width_w = ply_width_x;
                 ply_width_e = ply_width_x;
-                Array.Resize(ref stud_spacing_w, stud_spacing_x.Length-1);
-                Array.Resize(ref stud_spacing_e, stud_spacing_x.Length-1);
+                Array.Resize(ref stud_spacing_w, stud_spacing_x.Length);
+                Array.Resize(ref stud_spacing_e, stud_spacing_x.Length);
                 for (var i = 0; i < stud_spacing_x.Length; i++)
                 {
                     stud_spacing_w[i] = stud_spacing_x[i];
@@ -335,8 +470,8 @@ namespace ColumnDesign.Methods
                 n_studs_e = n_studs_y;
                 ply_width_w = ply_width_y;
                 ply_width_e = ply_width_y;
-                Array.Resize(ref stud_spacing_w, stud_spacing_y.Length-1);
-                Array.Resize(ref stud_spacing_e, stud_spacing_y.Length-1);
+                Array.Resize(ref stud_spacing_w, stud_spacing_y.Length);
+                Array.Resize(ref stud_spacing_e, stud_spacing_y.Length);
                 for (var i = 0; i < stud_spacing_y.Length; i++)
                 {
                     stud_spacing_w[i] = stud_spacing_y[i];
@@ -347,14 +482,14 @@ namespace ColumnDesign.Methods
             {
                 n_studs_e = n_studs_x;
                 ply_width_e = ply_width_x;
-                Array.Resize(ref stud_spacing_e, stud_spacing_x.Length-1);
+                Array.Resize(ref stud_spacing_e, stud_spacing_x.Length);
                 for (var i = 0; i < stud_spacing_x.Length; i++)
                 {
                     stud_spacing_e[i] = stud_spacing_x[i];
                 }
             }
 
-            if (ply_width_x>48||ply_width_y>48)
+            if (ply_width_x > 48 || ply_width_y > 48)
             {
                 max_ply_ht = 48;
             }
@@ -362,7 +497,117 @@ namespace ColumnDesign.Methods
             {
                 max_ply_ht = 96;
             }
-            //TODO PLYWOOD
+
+            if (window)
+            {
+                var temp_2 = 0d;
+                var ply_cnt = 0;
+                temp_1 = 0;
+                for (var i = 0; i < ply_seams_win.Length - 1; i++)
+                {
+                    temp_1 += ply_seams_win[i];
+                    if (temp_1 >= WinPos)
+                    {
+                        ply_cnt++;
+                        temp_2 += ply_seams_win[i + 1];
+                    }
+                }
+
+                if (temp_2 <= max_ply_ht)
+                {
+                    ply_seams_win[ply_seams_win.Length - ply_cnt] = temp_2;
+                    Array.Resize(ref ply_seams_win, ply_seams_win.Length - ply_cnt + 1);
+                }
+            }
+
+            ply_bot_n = 0;
+            for (var i = 0; i < ply_seams.Length; i++)
+            {
+                if (Math.Round(ply_seams[i], 3) == Math.Round(max_ply_ht, 3))
+                {
+                    ply_bot_n++;
+                }
+            }
+
+            int unique_plys;
+            double[] ply_widths = new double[1];
+            double[,] ply_cuts = new double[2, 0];
+            unique_plys = 0;
+            ply_widths[0] = ply_width_x;
+            ply_widths[1] = ply_width_y;
+            for (var i = 0; i < ply_seams.Length; i++)
+            {
+                for (var j = 0; j < ply_widths.Length; j++)
+                {
+                    for (var l = 0; l < ply_cuts.GetLength(1); l++)
+                    {
+                        if (Math.Round(ply_cuts[0, l], 3) == Math.Round(ply_widths[j], 3) &&
+                            Math.Round(ply_cuts[1, l], 3) == Math.Round(ply_seams[i], 3))
+                        {
+                            ply_cuts[2, l] += 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
+                                              (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
+                            break;
+                        }
+                        else if (l == ply_cuts.GetLength(1))
+                        {
+                            unique_plys++;
+                            ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys);
+                            ply_cuts[0, unique_plys] = ply_widths[j];
+                            ply_cuts[1, unique_plys] = ply_seams[i];
+                            ply_cuts[2, unique_plys] = 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
+                                                       (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (Math.Round(ply_cuts[0, ply_cuts.GetLength(1)], 3) == 0)
+            {
+                ply_cuts = ResizeArray<double>(ply_cuts, 3, ply_cuts.GetLength(1) - 1);
+                unique_plys--;
+            }
+
+            for (var i = 0; i < ply_seams_win.Length; i++)
+            {
+                for (var j = 0; j < ply_cuts.GetLength(1); j++)
+                {
+                    if (Math.Round(ply_cuts[1, j], 3) == Math.Round(ply_width_w, 3) &&
+                        Math.Round(ply_cuts[2, j], 3) == Math.Round(ply_seams_win[i], 3))
+                    {
+                        ply_cuts[2, j]++;
+                        break;
+                    }
+                    else if (j == ply_cuts.GetLength(1))
+                    {
+                        unique_plys++;
+                        ply_cuts = ResizeArray(ply_cuts, 3, unique_plys);
+                        ply_cuts[0, unique_plys] = ply_width_w;
+                        ply_cuts[1, unique_plys] = ply_seams_win[i];
+                        ply_cuts[2, unique_plys]++;
+                        break;
+                    }
+                }
+            }
+
+            if (Math.Round(ply_cuts[0, ply_cuts.GetLength(1) - 1], 3) == 0)
+            {
+                ply_cuts = ResizeArray(ply_cuts, 3, ply_cuts.GetLength(1) - 1);
+                unique_plys--;
+            }
+
+            var msg = "";
+            for (var i = 0; i < ply_cuts.GetLength(1); i++)
+            {
+                for (var j = 0; j < ply_cuts.GetLength(0); j++)
+                {
+                    msg += $"{ply_cuts[j, i]}\t";
+                }
+
+                msg += "\n";
+            }
+
+            TaskDialog.Show("Message", msg);
 
             // #####################################################################################
             //                                                                              C L A M P S
@@ -377,8 +622,8 @@ namespace ColumnDesign.Methods
             string clamp_block_bk;
             string clamp_block_op;
             string clamp_block_pr;
-            var bigSide = new[] {x, y, z}.Max();
-            if (_ui.RbColumn824.IsChecked == true || _ui.RbColumnCustom.IsChecked == true && bigSide <= 24)
+            var bigSide = new[] {x, y}.Max();
+            if (_ui.RbColumn824.IsChecked == true || _ui.RbColumnCustom.IsChecked == true && bigSide < 24)
             {
                 clamp_size = 1;
                 clamp_name = "8/24";
@@ -413,10 +658,11 @@ namespace ColumnDesign.Methods
                 {
                     clamp_block_pr += "_FLIPPED";
                 }
+
                 clamp_block_op += "_WIN";
                 swing_ang = -Math.PI / 4;
             }
-            
+
             var clamp_matrix = ImportMatrix(@$"{GlobalNames.WtFileLocationPrefix}Columns\clamp_matrix.csv");
             long_side = x <= y ? y : x;
 
@@ -447,7 +693,7 @@ namespace ColumnDesign.Methods
             }
 
             var ht_rem = z - bot_clamp_gap;
-            for (var i = 0; i < clamp_spacing.Length-1; i++)
+            for (var i = 0; i < clamp_spacing.Length - 1; i++)
             {
                 if (clamp_spacing[i] <= ht_rem)
                 {
@@ -462,30 +708,32 @@ namespace ColumnDesign.Methods
             }
 
             Array.Resize(ref clamp_spacing, n_clamps + 1);
-            clamp_spacing[clamp_spacing.Length-1] = (int)bot_clamp_gap;
+            clamp_spacing[clamp_spacing.Length - 1] = (int) bot_clamp_gap;
             var tot_temp = clamp_spacing.Sum();
             clamp_spacing[clamp_spacing.Length - 2] -= tot_temp - (int) z;
             TestClampSpacing:
             var infExit = 0;
-            for (var i = 1; i < clamp_spacing.Length; i++)
+            for (var i = 0; i < clamp_spacing.Length; i++)
             {
                 if (clamp_spacing[i] < 8)
                 {
                     clamp_spacing[i - 1] -= 8 - clamp_spacing[i];
                     clamp_spacing[i] = 8;
-                }
 
-                infExit++;
-                if (infExit > 100)
-                {
-                    throw new TimeoutException("Error: Infinite loop encountered while computing clamp spacings.");
-                }
-                else
-                {
-                    goto TestClampSpacing;
+
+                    infExit++;
+                    if (infExit > 100)
+                    {
+                        throw new TimeoutException("Error: Infinite loop encountered while computing clamp spacings.");
+                    }
+                    else
+                    {
+                        goto TestClampSpacing;
+                    }
                 }
             }
-            var clamp_spacing_con = new int[clamp_spacing.Length - 1];
+
+            var clamp_spacing_con = new int[clamp_spacing.Length];
             clamp_spacing_con[0] = (int) z - clamp_spacing[0];
             for (var i = 1; i < clamp_spacing.Length; i++)
             {
@@ -509,7 +757,7 @@ namespace ColumnDesign.Methods
                                 clamp_spacing_con[n_clamps - j + i] = clamp_spacing_con[n_clamps - j + i - 1];
                             }
 
-                            clamp_spacing_con[i] = (int)WinPos - (int)win_clamp_bot_max;
+                            clamp_spacing_con[i] = (int) WinPos - (int) win_clamp_bot_max;
                             clamp_spacing_con[clamp_spacing_con.Length - 1] = 0;
                             if (clamp_spacing_con[i + 1] - clamp_spacing_con[i] < 8)
                             {
@@ -521,7 +769,7 @@ namespace ColumnDesign.Methods
 
                         if (WinPos - clamp_spacing_con[i] <= win_clamp_bot_max)
                         {
-                            clamp_spacing_con[i] = (int) WinPos - (int)win_clamp_bot_max;
+                            clamp_spacing_con[i] = (int) WinPos - (int) win_clamp_bot_max;
                             goto LowerWinClampSet;
                         }
                     }
@@ -541,7 +789,7 @@ namespace ColumnDesign.Methods
                             clamp_spacing_con[clamp_spacing_con.Length - 1] = (int) WinPos + (int) win_clamp_top_max;
                             for (var j = 0; j < clamp_spacing_con.Length; j++)
                             {
-                                for (var l = 0; l < clamp_spacing_con.Length - j; l++)
+                                for (var l = 0; l < clamp_spacing_con.Length - 1; l++)
                                 {
                                     if (clamp_spacing_con[l + 1] > clamp_spacing_con[l])
                                     {
@@ -578,14 +826,14 @@ namespace ColumnDesign.Methods
                 }
 
                 UpperWinClampSet:
-                Array.Resize(ref clamp_spacing, n_clamps);
+                Array.Resize(ref clamp_spacing, n_clamps + 1);
                 clamp_spacing_con[0] = (int) z - clamp_spacing_con[0];
                 for (var i = 1; i < n_clamps; i++)
                 {
                     clamp_spacing_con[i] = clamp_spacing_con[i - 1] - clamp_spacing_con[i];
                 }
 
-                clamp_spacing[n_clamps + 1] = clamp_spacing_con[clamp_spacing_con.Length - 2];
+                clamp_spacing[n_clamps] = clamp_spacing_con[clamp_spacing_con.Length - 2];
             }
 
             n_reinf_angles = 0;
@@ -612,7 +860,7 @@ namespace ColumnDesign.Methods
             }
 
             n_reinf_angles *= 2;
-            if (_ui.WindowX.IsChecked == true || _ui.WindowY.IsChecked == true)
+            if (window)
             {
                 if (clamp_spacing_con[1] < WinPos)
                 {
@@ -620,11 +868,89 @@ namespace ColumnDesign.Methods
                         "Warning:\nPour window is only secured by 1 clamp. Consult with an engineering manager");
                 }
             }
-            
+
             // #####################################################################################
-            //                                                                  M I S C E L L A N E O U S
+            //                                                               M I S C E L L A N E O U S
             // #####################################################################################
-            //TODO MISCELLANEOUS
+
+            int n_bolts;
+            int n_screws;
+            int n_chamf;
+            double brace_L_stored;
+            string brace_name;
+            string brace_block;
+
+            var chamf_length = 12;
+            if (z < 160)
+            {
+                brace_size = 1;
+                brace_L_stored = 79.6;
+                brace_name = "7'-TO-11'";
+                brace_block = "VBA_AFB_7-11";
+            }
+            else
+            {
+                brace_size = 2;
+                brace_L_stored = 128.6;
+                brace_name = "11'-TO-19'";
+                brace_block = "VBA_AFB_11-19";
+            }
+
+            int n = 0;
+            do
+            {
+                k++;
+            } while (clamp_spacing_con[n] > z * 0.7);
+
+            int brace_clamp;
+            if (Math.Abs(clamp_spacing_con[n] - z * 0.7) < Math.Abs(clamp_spacing_con[n - 1] - z * 0.7))
+            {
+                brace_clamp = n;
+            }
+            else
+            {
+                brace_clamp = n - 1;
+            }
+
+            do
+            {
+                brace_clamp--;
+            } while (clamp_spacing_con[brace_clamp] + 0.9289 < brace_L_stored + 4);
+
+            int chain_clamp = 1;
+            do
+            {
+                chain_clamp++;
+            } while (clamp_spacing_con[chain_clamp] > clamp_spacing_con[brace_clamp] + 0.9289 - brace_L_stored + 1);
+
+            chain_clamp--;
+            col_wt = CalcWeightFunction.wt_total(x, y, z, n_studs_x, n_studs_y, stud_type, n_clamps, clamp_size,
+                brace_size);
+            if (col_wt <= max_wt_single_top)
+            {
+                n_top_clamps = 1;
+            }
+            else
+            {
+                n_top_clamps = 2;
+            }
+
+            n_bolts = (n_studs_total * n_top_clamps) + (2 * (n_clamps - n_top_clamps));
+            n_screws = (n_studs_total - 2) * (n_clamps - n_top_clamps);
+
+            if (z == 144)
+            {
+                n_chamf = 4;
+            }
+            else
+            {
+                n_chamf = (int) (4 * Math.Floor((z / 12) / chamf_length) +
+                                 Math.Floor(4 / (12 / (z / 12 - chamf_length * Math.Floor((z / 12) / chamf_length)))));
+                if (z < chamf_length * 12)
+                {
+                    n_chamf = 4;
+                }
+            }
 
             // #####################################################################################
             //                                                                                   T E X T
@@ -686,14 +1012,14 @@ namespace ColumnDesign.Methods
             var pt_blk = new double[3];
             bool DrawB;
             bool DrawW;
-            if (window==false && Math.Abs(x - y) < 0.001)
+            if (window == false && Math.Abs(x - y) < 0.001)
             {
                 ptA[0] = pt_o[0] + 245;
                 ptA[1] = pt_o[1] + 25;
                 ptE[0] = pt_o[0] + 100;
                 ptE[1] = pt_o[1] + 25;
             }
-            else if (window==true && Math.Abs(x - y) < 0.001)
+            else if (window == true && Math.Abs(x - y) < 0.001)
             {
                 ptW[0] = pt_o[0] + 300;
                 ptW[1] = pt_o[1] + 25;
@@ -703,7 +1029,7 @@ namespace ColumnDesign.Methods
                 ptE[1] = pt_o[1] + 25;
                 DrawW = true;
             }
-            else if (window==false && Math.Abs(x - y) > 0.001)
+            else if (window == false && Math.Abs(x - y) > 0.001)
             {
                 ptA[0] = pt_o[0] + 300;
                 ptA[1] = pt_o[1] + 25;
@@ -713,7 +1039,7 @@ namespace ColumnDesign.Methods
                 ptE[1] = pt_o[1] + 25;
                 DrawB = true;
             }
-            else if (window==true && Math.Abs(x - y) > 0.001)
+            else if (window == true && Math.Abs(x - y) > 0.001)
             {
                 ptW[0] = pt_o[0] + 340 - 0.5 * ply_width_w;
                 ptW[1] = pt_o[1] + 25;
@@ -721,11 +1047,12 @@ namespace ColumnDesign.Methods
                 ptA[1] = pt_o[1] + 25;
                 ptB[0] = pt_o[0] + 190 - 0.5 * ply_width_y;
                 ptB[1] = pt_o[1] + 25;
-                ptE[0] = pt_o[0] + 54.5 - 0.5 * (ply_width_w -24);
+                ptE[0] = pt_o[0] + 54.5 - 0.5 * (ply_width_w - 24);
                 ptE[1] = pt_o[1] + 25;
                 DrawB = true;
                 DrawW = true;
             }
+
             // _doc.Create.NewFamilyInstance(clampPlanBack824Location,
             //     GetFamilySymbolByName(GlobalNames.WtClampPlanBack824), draftingView);
             // _doc.Create.NewFamilyInstance(clampPlanOp824Location,

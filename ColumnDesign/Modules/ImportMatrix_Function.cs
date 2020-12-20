@@ -43,7 +43,7 @@ namespace ColumnDesign.Modules
             return returnMatrix;
         }
 
-        private static T[,] ResizeArray<T>(T[,] original, int rows, int cols)
+        public static T[,] ResizeArray<T>(T[,] original, int rows, int cols)
         {
             var newArray = new T[rows, cols];
             var minRows = Math.Min(rows, original.GetLength(0));

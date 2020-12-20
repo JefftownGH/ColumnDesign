@@ -17,7 +17,7 @@ namespace ColumnDesign.Modules
         private const double Wt1119Brace = 76;
         private const double WtExtra = 50;
 
-        public static double wt_total(double x, double y, double z, double nStudsX, double nStudsY,
+        public static int wt_total(double x, double y, double z, double nStudsX, double nStudsY,
             double studType, double nClamps, double clampSize, double braceSize)
         {
             var wtStud = studType switch
@@ -47,7 +47,7 @@ namespace ColumnDesign.Modules
                            wtStud * (z / 12) * 2 * (nStudsX + nStudsY) +
                            wtClamp * nClamps + wtBrace * 3;
             wtTotal = Math.Ceiling((wtTotal + WtExtra) / 100);
-            return wtTotal * 100;
+            return (int)wtTotal * 100;
         }
 
         public static double wt_panel(double x, double y, double z, double nStudsX, double nStudsY,

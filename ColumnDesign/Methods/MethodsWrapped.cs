@@ -36,7 +36,7 @@ namespace ColumnDesign.Methods
             }
             catch (Exception e)
             {
-                TaskDialog.Show("Error", e.Message);
+                TaskDialog.Show("Error", e.Message + e.StackTrace);
             }
         }
     }
