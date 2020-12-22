@@ -10,6 +10,7 @@ using ColumnDesign.Annotations;
 using ColumnDesign.Methods;
 using ColumnDesign.UI;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.UpdatePly_Function;
 
 namespace ColumnDesign.ViewModel
 {
@@ -34,6 +35,10 @@ namespace ColumnDesign.ViewModel
         private string _sDate;
         private ICommand _drawGatesCommand;
         private ICommand _drawScissorsCommand;
+        private string _slblAxis;
+        private string _winDim2;
+        private string _winDim1;
+        private string _boxPlySeams;
 
         public string WidthX
         {
@@ -41,8 +46,11 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _widthX = value;
+                _boxPlySeams = "";
+                OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(WidthX));
                 OnPropertyChanged(nameof(SheetName));
+                UpdatePly(_view, this);
             }
         }
 
@@ -63,8 +71,11 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _lengthY = value;
+                _boxPlySeams = "";
+                OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(LengthY));
                 OnPropertyChanged(nameof(SheetName));
+                UpdatePly(_view, this);
             }
         }
 
@@ -85,7 +96,10 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _heightZ = value;
+                _boxPlySeams = "";
+                OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(HeightZ));
+                UpdatePly(_view, this);
             }
         }
 
@@ -106,7 +120,10 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _quantity = value;
+                _boxPlySeams = "";
+                OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(Quantity));
+                UpdatePly(_view, this);
             }
         }
 
@@ -137,8 +154,10 @@ namespace ColumnDesign.ViewModel
             {
                 _windowY = false;
                 _windowX = value;
+                _slblAxis = "X";
                 OnPropertyChanged(nameof(WindowX));
                 OnPropertyChanged(nameof(WindowY));
+                OnPropertyChanged(nameof(SlblAxis));
             }
         }
 
@@ -149,8 +168,10 @@ namespace ColumnDesign.ViewModel
             {
                 _windowX = false;
                 _windowY = value;
+                _slblAxis = "Y";
                 OnPropertyChanged(nameof(WindowY));
                 OnPropertyChanged(nameof(WindowX));
+                OnPropertyChanged(nameof(SlblAxis));
             }
         }
 
@@ -171,6 +192,46 @@ namespace ColumnDesign.ViewModel
             {
                 _sDate = value;
                 OnPropertyChanged(nameof(SDate));
+            }
+        }
+        public string SlblAxis
+        {
+            get => _slblAxis;
+            set
+            {
+                _slblAxis = value;
+                OnPropertyChanged(nameof(SlblAxis));
+            }
+        }
+
+        public string WinDim1
+        {
+            get => _winDim1;
+            set
+            {
+                _winDim1 = value;
+                OnPropertyChanged(nameof(WinDim1));
+            }
+        }
+
+        public string WinDim2
+        {
+            get => _winDim2;
+            set
+            {
+                _winDim2 = value;
+                OnPropertyChanged(nameof(WinDim2));
+            }
+        }
+
+        public string BoxPlySeams
+        {
+            get => _boxPlySeams;
+            set
+            {
+                _boxPlySeams = value;
+                OnPropertyChanged(nameof(BoxPlySeams));
+                UpdatePly(_view, this);
             }
         }
 
@@ -237,7 +298,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(SSheetName));
             }
         }
-
 
         public event PropertyChangedEventHandler PropertyChanged;
 

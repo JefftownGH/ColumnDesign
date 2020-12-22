@@ -1,17 +1,18 @@
 ﻿using System;
+using ColumnDesign.UI;
 
 namespace ColumnDesign.Modules
 {
     public class GetPlySeamsFunction
     {
-        public static double[] GetPlySeams(double x, double y, double z, int tabControlIndex)
+        public static double[] GetPlySeams(double x, double y, double z, ColumnCreatorView ui)
         {
             double plyWidthX;
             double plyWidthY;
             const double plyTopHtMin = 6;
-            double[] plySeamsFun = { };
+            double[] plySeamsFun = new double[1];
             double maxPlyHt;
-            if (tabControlIndex == 0)
+            if (ui.Tabs.SelectedIndex == 0)
             {
                 plyWidthX = x + 1.5;
                 plyWidthY = y + 1.5;
@@ -26,7 +27,7 @@ namespace ColumnDesign.Modules
             else maxPlyHt = 96;
             var plyTopHt = z - maxPlyHt * (int) (z / maxPlyHt);
             var plyBotN = (int) (z / maxPlyHt);
-            Array.Resize(ref plySeamsFun, plyBotN + (int) Math.Abs(plyTopHt) != 0 ? 1 : 0);
+            Array.Resize(ref plySeamsFun, plyBotN + (Math.Abs(plyTopHt) != 0 ? 1 : 0));
             if (z <= maxPlyHt)
             {
                 plySeamsFun[0] = z;

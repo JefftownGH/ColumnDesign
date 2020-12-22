@@ -2,10 +2,12 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ColumnDesign.Methods;
+using ColumnDesign.Modules;
 using ColumnDesign.ViewModel;
 
 namespace ColumnDesign.UI
@@ -32,6 +34,7 @@ namespace ColumnDesign.UI
             _vm.Date = now;
             _vm.SDate = now;
             _vm.PlywoodType = "HDO";
+            _vm.SlblAxis = "X";
         }
         private void Window_OnChecked(object sender, RoutedEventArgs e)
         {
@@ -42,6 +45,22 @@ namespace ColumnDesign.UI
         private void Window_OnUnchecked(object sender, RoutedEventArgs e)
         {
             Picking.IsEnabled = true;
+        }
+
+        private void GridAxis_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _vm.SlblAxis = _vm.SlblAxis.Equals("X") ? "Y" : "X";
+            UpdatePly_Function.UpdatePly(this, _vm);
+        }
+
+        private void Window_Click(object sender, RoutedEventArgs e)
+        {
+            UpdatePly_Function.UpdatePly(this, _vm);
+        }
+
+        private void BoxPlySeams_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdatePly_Function.UpdatePly(this, _vm);
         }
     }
 }

@@ -1,55 +1,4 @@
-﻿/*' TO DO LIST
-
-Private Sub btnRotate_Click()
-    If txtViewName.Caption = "Front" Then
-        txtViewName.Caption = "Left"
-    ElseIf txtViewName.Caption = "Left" Then
-        txtViewName.Caption = "Back"
-    ElseIf txtViewName.Caption = "Back" Then
-        txtViewName.Caption = "Right"
-    ElseIf txtViewName.Caption = "Right" Then
-        txtViewName.Caption = "Front"
-    End If
-    
-End Sub
-
-Private Sub chkWinX_Click()
-  
-    If chkWinX.Value = True Or chkWinY.Value = True Then
-        SquaringCornerOptionRegularButton.Value = True
-        SquaringCornerOptionPickingButton.Enabled = False
-    End If
-    
-    If chkWinX.Value = False And chkWinY.Value = False Then
-        SquaringCornerOptionPickingButton.Enabled = True
-    End If
-    
-    lblAxis.Caption = "X" 'Change axis to X for this window
-    Call UpdatePly.UpdatePly(2) 'Update the plywood layout sketch
-End Sub
-Private Sub chkWinY_Click()
-    
-    If chkWinX.Value = True Or chkWinY.Value = True Then
-        SquaringCornerOptionRegularButton.Value = True
-        SquaringCornerOptionPickingButton.Enabled = False
-    End If
-    
-    If chkWinX.Value = False And chkWinY.Value = False Then
-        SquaringCornerOptionPickingButton.Enabled = True
-    End If
-    
-    lblAxis.Caption = "Y" 'Change axis to Y for this window
-    Call UpdatePly.UpdatePly(2) 'Update the plywood layout sketch
-End Sub
-
-Private Sub Image2_Click()
-    If ColumnCreator.lblAxis.Caption = "X" Then
-        ColumnCreator.lblAxis.Caption = "Y"
-    ElseIf ColumnCreator.lblAxis.Caption = "Y" Then
-        ColumnCreator.lblAxis.Caption = "X"
-    End If
-End Sub
-
+﻿/*
 Private Sub Image3_Click()
     If ColumnCreator.lblAxis.Caption = "X" Then
         ColumnCreator.lblAxis.Caption = "Y"
@@ -77,10 +26,6 @@ Private Sub lblAxis_Click()
     Call UpdatePly.UpdatePly(0) 'Update the plywood layout sketch
 End Sub
 
-Private Sub MultiPage1_Change()
-
-End Sub
-
 Private Sub WinDim1_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shift As Integer)
     WinDim2.Value = ConvertFtIn(ConvertToNum(HeightBox.Value) - ConvertToNum(WinDim1.Value))
     Call UpdatePly.UpdatePly(2) 'Update the plywood layout sketch
@@ -101,28 +46,8 @@ Private Sub CommandButton1_Click()
 '#####################################################################################
 '                                     T E X T
 '#####################################################################################
-    
-    'Insert material count text
-    Dim MTextObject1 As AcadMText
-    Dim MTextObject2 As AcadMText
-    Dim objTextStyle As AcadTextStyle
-    Dim pt_click() As Double
-    Dim qty_text As String
-    Dim pt_o(0 To 2) As Double 'lower left corner of sheet border
-    Dim pt1(0 To 2) As Double  'Fabrication notes
-    Dim pt2(0 To 2) As Double  'Title text for fabrication notes and quantities
-    Dim pt3(0 To 2) As Double  'Quantity/components text
-    
-    ThisDrawing.ActiveSpace = acModelSpace
-    pt_click = ThisDrawing.Utility.GetPoint(, "Click to place")
-    
-    pt_o(0) = pt_click(0) + 20.23568507: pt_o(1) = pt_click(1) + 5.17943146: pt_o(2) = 0
-    pt1(0) = pt_o(0) + 448.4: pt1(1) = pt_o(1) + 360
-    pt2(0) = pt1(0) + 0: pt2(1) = pt1(1) + 7
-    pt3(0) = pt1(0) + 0: pt3(1) = pt1(1) - 52
-    
-    'FABRICATION NOTES AND QUANTITIES
-    ThisDrawing.ActiveLayer = ThisDrawing.Layers("FORM")
+         
+    TODO Down
     
     Set MTextObject1 = ThisDrawing.ModelSpace.AddMText(pt1, 100, _
     "• COLUMN SIZE = " & x & "'' X " & y & "''" & vbCrLf & vbCrLf & _
@@ -209,81 +134,7 @@ Private Sub CommandButton1_Click()
     '#####################################################################################
     '                                 D R A W I N G
     '#####################################################################################
-    Dim BlockRefObj As AcadBlockReference 'Create block reference object
-    Dim ObjDynBlockProp As AcadDynamicBlockReferenceProperty
-    Dim LineObj As AcadLine
-    Dim PlyTemp As Double
-    Dim ptA(0 To 2) As Double 'lower left corner of side A elevation view plywood
-    Dim ptB(0 To 2) As Double 'lower left corner of side B elevation view plywood
-    Dim ptW(0 To 2) As Double 'lower left corner of side W (window) elevation view plywood
-    Dim ptE(0 To 2) As Double 'Lower left corner of clamp elevation view (right side of ply edge)
-    
-    Dim pt4(0 To 2) As Double 'Plywood seam locations for sides A and B
-    Dim pt5(0 To 2) As Double 'Stud locations on turned out clamp in plan view
-    Dim pt6(0 To 2) As Double 'stud locations for sides A, B, and W
-    Dim pt7(0 To 2) As Double 'UNUSED
-    Dim pt8(0 To 2) As Double 'Elevation section ply base for side A
-    Dim pt9(0 To 2) As Double 'Elevation section ply base for side B
-    Dim pt10(0 To 2) As Double 'Elevation section ply base for side W
-    Dim pt11(0 To 2) As Double 'stud locations at elevation section for sides A, B, and W
-    Dim pt12(0 To 2) As Double 'ply+chamfer for plan view
-    Dim pt13(0 To 2) As Double 'origin point on plan view
-    Dim pt14(0 To 2) As Double 'stud locs for plan view
-    Dim pt15(0 To 2) As Double 'clamp locs for plan view
-    Dim pt16(0 To 2) As Double 'brace locs for plan view
-    Dim pt17(0 To 2) As Double 'Text locs for plan view
-    Dim pt18(0 To 2) As Double 'Chamfer locations for elevation views
-    Dim pt20(0 To 2) As Double 'stud locations at base of clamp elevation and framing lumber at base
-    Dim pt21(0 To 2) As Double 'Clamp locations in elevation
-    Dim pt22(0 To 2) As Double 'Clamp dimensions in inches from bottom
-    Dim pt23(0 To 2) As Double 'Start point for top clamp dim line
-    Dim pt24(0 To 2) As Double 'End point for top clamp dim line
-    Dim pt25(0 To 2) As Double '"CLAMP" and "TOP CLAMP" labels
-    Dim pt26(0 To 2) As Double 'Lifting sling points
-    Dim pt27(0 To 2) As Double 'Coil rod and nuts for top clamps
-    Dim pt28(0 To 2) As Double 'Brace related locations
-    Dim pt29(0 To 2) As Double 'Screw heads for ply elevations
-    Dim pt30(0 To 2) As Double 'Misc. notes and details
-    Dim pt31(0 To 2) As Double 'Reinforcing angles for wide columns
-    Dim pt32(0 To 2) As Double 'Lower left text for column count
-    Dim pt33(0 To 2) As Double 'A & B elevation sights for plan views
-    Dim pt34(0 To 2) As Double 'Insertion point for timestamp (lower left corner, outside of sheet)
-    Dim pt_blk(0 To 2) As Double
-    
-    'Control which elevation views are drawn and space them accordingly
-    Dim DrawB As Boolean: DrawB = False     'Side B (if different)
-    Dim DrawW As Boolean: DrawW = False     'Window panel, if any
 
-    'Identical sides, no window (2 views)
-    If Round(x, 3) = Round(y, 3) And window = False Then
-        ptA(0) = pt_o(0) + 245: ptA(1) = pt_o(1) + 25
-        ptE(0) = pt_o(0) + 100: ptE(1) = pt_o(1) + 25
-    'Identical sides, with window (3 views)
-    ElseIf Round(x, 3) = Round(y, 3) And window = True Then
-        ptW(0) = pt_o(0) + 300: ptW(1) = pt_o(1) + 25
-        ptA(0) = pt_o(0) + 185: ptA(1) = pt_o(1) + 25
-        ptE(0) = pt_o(0) + 54.5: ptE(1) = pt_o(1) + 25
-        DrawW = True
-    'Different sides, no window (3 views)
-    ElseIf Round(x, 3) <> Round(y, 3) And window = False Then
-        ptA(0) = pt_o(0) + 300: ptA(1) = pt_o(1) + 25
-        ptB(0) = pt_o(0) + 185: ptB(1) = pt_o(1) + 25
-        ptE(0) = pt_o(0) + 54.5: ptE(1) = pt_o(1) + 25
-        DrawB = True
-    'Different sides, with window (4 views)
-    ElseIf Round(x, 3) <> Round(y, 3) And window = True Then
-        ptW(0) = pt_o(0) + 340 - 0.5 * ply_width_w: ptW(1) = pt_o(1) + 25
-        ptA(0) = pt_o(0) + 267.25 - 0.5 * ply_width_x: ptA(1) = pt_o(1) + 25
-        ptB(0) = pt_o(0) + 190 - 0.5 * ply_width_y: ptB(1) = pt_o(1) + 25
-        ptE(0) = pt_o(0) + 54.5 - 0.5 * (ply_width_w - 24): ptE(1) = pt_o(1) + 25
-        DrawB = True
-        DrawW = True
-    End If
-
-    'ELEVATION VIEWS
-    
-    ThisDrawing.ActiveLayer = ThisDrawing.Layers("FORM")
-    'Profile of B side studs
     Call DrawRectangle(ptE(0) - ply_thk, ptE(1) + stud_base_gap, ptE(0) - ply_thk - 1.5, ptE(1) + z)
     
     'Draw studs
@@ -1511,39 +1362,6 @@ Private Sub LoadButton_Click()
     AreaBox.Value = temp_lines(11)
 End Sub
 
-Private Sub SquaringCornerOptionPickingButton_Click()
-    SquaringCornerOptionRegularButton.Value = False
-    SquaringCornerOptionPickingButton.Value = True
-End Sub
-Private Sub SquaringCornerOptionRegularButton_Click()
-    SquaringCornerOptionRegularButton.Value = True
-    SquaringCornerOptionPickingButton.Value = False
-End Sub
-Private Sub SquaringCornerOptionPickingButton_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub SquaringCornerOptionRegularButton_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Function FolderExists(ByVal path As String) As Boolean
-    FolderExists = False
-    Dim fso As New FileSystemObject
-    If fso.FolderExists(path) Then FolderExists = True
-End Function
-
-Function FolderCreate(ByVal path As String) As Boolean
-
-FolderCreate = True
-Dim fso As New FileSystemObject
-
-If FolderExists(path) Then
-    Exit Function
-Else
-    'on error GoTo DeadInTheWater
-    fso.CreateFolder path ' could there be any error with this, like if the path is really screwed up?
-    Exit Function
-End If
-
 DeadInTheWater:
     MsgBox "A folder could not be created for the following path: " & path & ". Check the path name and try again."
     FolderCreate = False
@@ -1563,148 +1381,6 @@ Private Sub PlyNameBox_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shif
     Else
         ColumnCreator.notHDOwarn.Visible = False
     End If
-End Sub
-Private Sub WidthBox_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shift As Integer)
-    'Update the plywood layout sketch
-    Call UpdatePly.UpdatePly(0)
-    
-    'Check that x, y, z inputs are within the defined limits
-    If CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 0 Then
-        Call UpdatePly.DisableDrawingButtons
-    ElseIf CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 1 Then
-        Call UpdatePly.EnableDrawingButtons
-    End If
-    
-    'If an error message is visible, disable the drawing button
-    If ColumnCreator.txtPlyError.Visible = True Then
-        Call UpdatePly.DisableDrawingButtons
-    End If
-    
-    'Auto-generate sheet name
-    Call AutoSheetName
-End Sub
-Private Sub LengthBox_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shift As Integer)
-    'Update the plywood layout sketch
-    Call UpdatePly.UpdatePly(0)
-
-    'Check that x, y, z inputs are within the defined limits
-    If CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 0 Then
-        Call UpdatePly.DisableDrawingButtons
-    ElseIf CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 1 Then
-        Call UpdatePly.EnableDrawingButtons
-    End If
-
-    'If an error message is visible, disable the drawing button
-    If ColumnCreator.txtPlyError.Visible = True Then
-        Call UpdatePly.DisableDrawingButtons
-    End If
-    
-    'Auto-generate sheet name
-    Call AutoSheetName
-End Sub
-Private Sub HeightBox_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shift As Integer)
-    'Update the plywood layout sketch
-    Call UpdatePly.UpdatePly(0)
-    Call UpdatePly.UpdatePly(3)
-    
-    'Check that x, y, z inputs are within the defined limits
-    If CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 0 Then
-        Call UpdatePly.DisableDrawingButtons
-    ElseIf CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 1 Then
-        Call UpdatePly.EnableDrawingButtons
-    End If
-    
-    'If an error message is visible, disable the drawing button
-    If ColumnCreator.txtPlyError.Visible = True Then
-        Call UpdatePly.DisableDrawingButtons
-    End If
-End Sub
-Private Sub QuantityBox_KeyUp(ByVal KeyAscii As MSForms.ReturnInteger, ByVal Shift As Integer)
-    'Check that x, y, z inputs are within the defined limits
-    If CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 0 Then
-        Call UpdatePly.DisableDrawingButtons
-    ElseIf CheckInputs(ConvertToNum(WidthBox.Value), ConvertToNum(LengthBox.Value), ConvertToNum(HeightBox.Value), ConvertToNum(QuantityBox.Value), 1) = 1 Then
-        Call UpdatePly.EnableDrawingButtons
-    End If
-
-    'If an error message is visible, disable the drawing button
-    If ColumnCreator.txtPlyError.Visible = True Then
-        Call UpdatePly.DisableDrawingButtons
-    End If
-End Sub
-
-
-Private Sub WidthBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-    Call KeyInputRestrictorFtIn(KeyAscii, WidthBox.Value)
-End Sub
-Private Sub LengthBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-    Call KeyInputRestrictorFtIn(KeyAscii, LengthBox.Value)
-End Sub
-Private Sub HeightBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-    Call KeyInputRestrictorFtIn(KeyAscii, HeightBox.Value)
-End Sub
-Private Sub QuantityBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-    Call KeyInputRestrictorNum(KeyAscii)
-End Sub
-
-Private Sub ClampSizeButton1_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ClampSizeButton2_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ClampSizeButton3_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ClampSizeButton4_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub CommandButton1_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-
-Private Sub ProjectNameBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ProjectTitleBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ProjectAddressBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub DateBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub SheetIssuedForBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub ScaleBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub DrawnByBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub JobNoBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub SheetBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub SuffixBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub AreaBox_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub SaveButton_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
-End Sub
-Private Sub LoadButton_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
-    If KeyAscii = 27 Then ColumnCreator.Hide
 End Sub
 
 Private Sub ProjectNameBox_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)

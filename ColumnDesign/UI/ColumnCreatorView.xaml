@@ -56,7 +56,7 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </Window.Resources>
-    <TabControl>
+    <TabControl x:Name="Tabs">
         <TabItem>
             <TabItem.Header>
                 <TextBlock Margin="3">Gates Columns</TextBlock>
@@ -73,7 +73,8 @@
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="Border" Background="White" BorderBrush="Gray"
                                                     BorderThickness="1">
-                                                <ContentPresenter HorizontalAlignment="Center"
+                                                <ContentPresenter 
+                                                    HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center" />
                                             </Border>
                                             <ControlTemplate.Triggers>
@@ -91,6 +92,9 @@
                                                         <Condition
                                                             Binding="{Binding Path=(Validation.HasError), ElementName=Quantity}"
                                                             Value="False" />
+                                                        <Condition
+                                                            Binding="{Binding Path=(Visibility), ElementName=TxtPlyError}"
+                                                            Value="Collapsed" />
                                                     </MultiDataTrigger.Conditions>
                                                     <Setter Property="IsEnabled" Value="True" />
                                                 </MultiDataTrigger>
@@ -128,7 +132,33 @@
                             <CheckBox x:Name="WindowX" Margin="10,0,0,0"
                                       IsChecked="{Binding WindowX}"
                                       Checked="Window_OnChecked"
-                                      Unchecked="Window_OnUnchecked" />
+                                      Unchecked="Window_OnUnchecked" 
+                                      Click="Window_Click">
+                                <CheckBox.Style>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
+                                                        Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="IsEnabled" Value="True" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Length (Y)</TextBlock>
@@ -144,7 +174,33 @@
                             <CheckBox x:Name="WindowY" Margin="10,0,0,0"
                                       IsChecked="{Binding WindowY}"
                                       Checked="Window_OnChecked"
-                                      Unchecked="Window_OnUnchecked" />
+                                      Unchecked="Window_OnUnchecked"
+                                      Click="Window_Click">
+                                <CheckBox.Style>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
+                                                        Value="False" />
+                                                    <Condition
+                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
+                                                        Value="False" />
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="IsEnabled" Value="True" />
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Height (Z)</TextBlock>
@@ -221,7 +277,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Scale</TextBlock>
-                            <TextBox Width="200">0.75</TextBox>
+                            <TextBox Width="200" IsReadOnly="True" Background="Gray">0.75</TextBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Drawn by</TextBlock>
@@ -265,36 +321,111 @@
                         </Grid>
                     </StackPanel>
                     <DockPanel LastChildFill="True">
-                        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                            <TextBlock x:Name="WinDim1" Margin="0,0,0,200" Foreground="Blue">
-                                <TextBlock.Visibility>
-                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
-                                        <Binding Path="WindowX" />
-                                        <Binding Path="WindowY" />
-                                    </MultiBinding>
-                                </TextBlock.Visibility>
-                            </TextBlock>
-                            <TextBlock x:Name="WinDim2" Foreground="Blue">
-                                <TextBlock.Visibility>
-                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
-                                        <Binding Path="WindowX" />
-                                        <Binding Path="WindowY" />
-                                    </MultiBinding>
-                                </TextBlock.Visibility>
-                            </TextBlock>
-                        </StackPanel>
-                     
-                        <TextBox x:Name="BoxPlySeams"  DockPanel.Dock="Bottom"/>
+
+                        <TextBox 
+                            x:Name="BoxPlySeams" 
+                                 DockPanel.Dock="Bottom" 
+                            Text="{Binding BoxPlySeams }"
+                            TextChanged="BoxPlySeams_OnTextChanged"/>
                         <TextBlock
                             DockPanel.Dock="Bottom"
                             x:Name="TxtPlyError"
                             Visibility="Collapsed"
                             Text="Error" HorizontalAlignment="Left"
                             Foreground="Red" />
-                        <Rectangle
-                            Fill="Transparent"
-                            Stroke="Black"
-                            Margin="20" />
+                        <Grid
+                            x:Name="GridAxis"
+                            DockPanel.Dock="Bottom"
+                            Margin="10"
+                            MouseLeftButtonDown="GridAxis_OnMouseLeftButtonDown">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40" />
+                                <RowDefinition Height="1" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+                            <Line Grid.Column="0" Grid.Row="0" Stretch="Fill" Y2="1" Stroke="Black" />
+                            <Line Grid.Column="1" Grid.Row="1" Stretch="Fill" X2="1" Stroke="Black" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                VerticalAlignment="Top"
+                                Margin="2"
+                                Text="Z" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Right"
+                                Margin="2"
+                                Text="{Binding SlblAxis}" />
+                        </Grid>
+                        <DockPanel
+                            x:Name="PlyLinesPanel"
+                            Margin="10"
+                            LastChildFill="True">
+                            <DockPanel.Style>
+                                <Style TargetType="DockPanel">
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
+                                                            Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DockPanel.Style>
+                            <Grid
+                                x:Name="GridWinDim"
+                                DockPanel.Dock="Left">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <Grid.Visibility>
+                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
+                                        <Binding Path="WindowX" />
+                                        <Binding Path="WindowY" />
+                                    </MultiBinding>
+                                </Grid.Visibility>
+                                <TextBlock
+                                    Grid.Row="1"
+                                    x:Name="WinDim1"
+                                    Foreground="Blue"
+                                    Text="{Binding WinDim1, UpdateSourceTrigger=PropertyChanged}">                                   
+                                </TextBlock>
+                                <TextBlock
+                                    Grid.Row="4"
+                                    x:Name="WinDim2"
+                                    Foreground="Blue"
+                                    Text="{Binding WinDim2, UpdateSourceTrigger=PropertyChanged}">
+                                </TextBlock>
+                            </Grid>
+                            <Grid>
+                                <Rectangle
+                                    Fill="Transparent"
+                                    Stroke="Black" />
+                            </Grid>
+                        </DockPanel>
                     </DockPanel>
                 </DockPanel>
             </TabItem.Content>
@@ -451,7 +582,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Scale</TextBlock>
-                            <TextBox Width="200">0.75</TextBox>
+                            <TextBox Width="200" IsReadOnly="True" Background="Gray">0.75</TextBox>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Drawn by</TextBlock>

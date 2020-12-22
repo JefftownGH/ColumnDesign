@@ -8,6 +8,7 @@ using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
 using static ColumnDesign.Modules.ImportMatrixFunction;
 using static ColumnDesign.Modules.ReadSizesFunction;
 using static ColumnDesign.Modules.ImportMatrixFunction;
+using static ColumnDesign.Modules.UpdatePly_Function;
 
 namespace ColumnDesign.Methods
 {
@@ -306,7 +307,7 @@ namespace ColumnDesign.Methods
                 stud_spacing_y[i] = stud_start_offset + i * (3.5 + avg_gap_y);
             }
 
-            if (push_studs_x == 1)
+            if (Math.Abs(push_studs_x - 1) < 0.001)
             {
                 if (avg_gap_x * (n_studs_x - 1) >= 2 * min_stud_gap)
                 {
@@ -411,7 +412,7 @@ namespace ColumnDesign.Methods
 
             ply_seams = ReadSizes(_ui.BoxPlySeams.Text);
             ply_seams_win = ReadSizes(_ui.BoxPlySeams.Text);
-            if (UpdatePly.ValidatePlySeams(_ui, ply_seams, x, y, z) == 0)
+            if (ValidatePlySeams(_ui, ply_seams, x, y, z) == 0)
             {
                 throw new Exception("Plywood layout invalid. You should never see this message...How did you do this?");
             }
@@ -421,7 +422,7 @@ namespace ColumnDesign.Methods
             for (var i = 0; i < ply_seams.Length; i++)
             {
                 temp_1 += ply_seams[i];
-                if (Math.Round(temp_1, 3) == Math.Round(WinPos, 3))
+                if (Math.Abs(temp_1 - WinPos) < 0.001)
                 {
                     break;
                 }
@@ -446,10 +447,10 @@ namespace ColumnDesign.Methods
             ply_width_y = y + 1.5;
             int n_studs_w;
             double ply_width_w = 0;
-            double[] stud_spacing_w = new double[0];
+            double[] stud_spacing_w = new double[1];
             int n_studs_e;
             double ply_width_e = 0;
-            double[] stud_spacing_e = new double[0];
+            double[] stud_spacing_e = new double[1];
             if (WinX)
             {
                 n_studs_w = n_studs_x;
@@ -520,18 +521,11 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            ply_bot_n = 0;
-            for (var i = 0; i < ply_seams.Length; i++)
-            {
-                if (Math.Round(ply_seams[i], 3) == Math.Round(max_ply_ht, 3))
-                {
-                    ply_bot_n++;
-                }
-            }
+            ply_bot_n = ply_seams.Count(t => Math.Abs(t - max_ply_ht) < 0.001);
 
             int unique_plys;
-            double[] ply_widths = new double[1];
-            double[,] ply_cuts = new double[2, 0];
+            double[] ply_widths = new double[2];
+            double[,] ply_cuts = new double[3, 1];
             unique_plys = 0;
             ply_widths[0] = ply_width_x;
             ply_widths[1] = ply_width_y;
@@ -541,8 +535,8 @@ namespace ColumnDesign.Methods
                 {
                     for (var l = 0; l < ply_cuts.GetLength(1); l++)
                     {
-                        if (Math.Round(ply_cuts[0, l], 3) == Math.Round(ply_widths[j], 3) &&
-                            Math.Round(ply_cuts[1, l], 3) == Math.Round(ply_seams[i], 3))
+                        if (Math.Abs(ply_cuts[0, l] - ply_widths[j]) < 0.001 &&
+                            Math.Abs(ply_cuts[1, l] - ply_seams[i]) < 0.001)
                         {
                             ply_cuts[2, l] += 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
                                               (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
@@ -551,7 +545,7 @@ namespace ColumnDesign.Methods
                         else if (l == ply_cuts.GetLength(1))
                         {
                             unique_plys++;
-                            ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys);
+                            ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys+1);
                             ply_cuts[0, unique_plys] = ply_widths[j];
                             ply_cuts[1, unique_plys] = ply_seams[i];
                             ply_cuts[2, unique_plys] = 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
@@ -562,9 +556,9 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            if (Math.Round(ply_cuts[0, ply_cuts.GetLength(1)], 3) == 0)
+            if (ply_cuts[0, ply_cuts.GetLength(1)-1] == 0)
             {
-                ply_cuts = ResizeArray<double>(ply_cuts, 3, ply_cuts.GetLength(1) - 1);
+                ply_cuts = ResizeArray<double>(ply_cuts, 3, ply_cuts.GetLength(1));
                 unique_plys--;
             }
 
@@ -572,8 +566,8 @@ namespace ColumnDesign.Methods
             {
                 for (var j = 0; j < ply_cuts.GetLength(1); j++)
                 {
-                    if (Math.Round(ply_cuts[1, j], 3) == Math.Round(ply_width_w, 3) &&
-                        Math.Round(ply_cuts[2, j], 3) == Math.Round(ply_seams_win[i], 3))
+                    if (Math.Abs(ply_cuts[0, j] - ply_width_w) < 0.001 &&
+                        Math.Abs(ply_cuts[1, j] - ply_seams_win[i]) < 0.001)
                     {
                         ply_cuts[2, j]++;
                         break;
@@ -590,24 +584,23 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            if (Math.Round(ply_cuts[0, ply_cuts.GetLength(1) - 1], 3) == 0)
+            if (ply_cuts[0, ply_cuts.GetLength(1)-1] == 0)
             {
-                ply_cuts = ResizeArray(ply_cuts, 3, ply_cuts.GetLength(1) - 1);
+                ply_cuts = ResizeArray(ply_cuts, 3, ply_cuts.GetLength(1));
                 unique_plys--;
             }
 
-            var msg = "";
-            for (var i = 0; i < ply_cuts.GetLength(1); i++)
-            {
-                for (var j = 0; j < ply_cuts.GetLength(0); j++)
-                {
-                    msg += $"{ply_cuts[j, i]}\t";
-                }
-
-                msg += "\n";
-            }
-
-            TaskDialog.Show("Message", msg);
+            // var msg = "";
+            // for (var i = 0; i < ply_cuts.GetLength(1); i++)
+            // {
+            //     for (var j = 0; j < ply_cuts.GetLength(0); j++)
+            //     {
+            //         msg += $"{ply_cuts[j, i]}\t";
+            //     }
+            //
+            //     msg += "\n";
+            // }
+            // TaskDialog.Show("Message", msg);
 
             // #####################################################################################
             //                                                                              C L A M P S
@@ -682,14 +675,11 @@ namespace ColumnDesign.Methods
             {
                 if (clamp_matrix[row_num, i] == 0)
                 {
-                    Array.Resize(ref clamp_spacing, k);
+                    Array.Resize(ref clamp_spacing, k-1);
                     break;
                 }
-                else
-                {
-                    clamp_spacing[i] = clamp_matrix[row_num, i];
-                    k++;
-                }
+                clamp_spacing[i] = clamp_matrix[row_num, i+1];
+                k++;
             }
 
             var ht_rem = z - bot_clamp_gap;
@@ -751,10 +741,10 @@ namespace ColumnDesign.Methods
                         if (WinPos - clamp_spacing[i] > win_clamp_bot_max)
                         {
                             n_clamps++;
-                            Array.Resize(ref clamp_spacing_con, n_clamps);
-                            for (var j = i; j < n_clamps; j++)
+                            Array.Resize(ref clamp_spacing_con, n_clamps+1);
+                            for (var j = i; j < n_clamps-1; j++)
                             {
-                                clamp_spacing_con[n_clamps - j + i] = clamp_spacing_con[n_clamps - j + i - 1];
+                                clamp_spacing_con[n_clamps - j + i-1] = clamp_spacing_con[n_clamps - j + i - 2];
                             }
 
                             clamp_spacing_con[i] = (int) WinPos - (int) win_clamp_bot_max;
@@ -777,30 +767,19 @@ namespace ColumnDesign.Methods
 
                 LowerWinClampSet:
                 int io;
-                for (var i = 0; i < clamp_spacing_con.Length; i++)
+                for (var i = 0; i < clamp_spacing_con.Length-1; i++)
                 {
-                    io = clamp_spacing_con.Length - 1 - i;
+                    io = clamp_spacing_con.Length - i-2;
                     if (clamp_spacing_con[io] > WinPos)
                     {
                         if ((clamp_spacing_con[io] - WinPos) > win_clamp_top_max)
                         {
                             n_clamps++;
-                            Array.Resize(ref clamp_spacing_con, n_clamps);
+                            Array.Resize(ref clamp_spacing_con, n_clamps+1);
                             clamp_spacing_con[clamp_spacing_con.Length - 1] = (int) WinPos + (int) win_clamp_top_max;
-                            for (var j = 0; j < clamp_spacing_con.Length; j++)
-                            {
-                                for (var l = 0; l < clamp_spacing_con.Length - 1; l++)
-                                {
-                                    if (clamp_spacing_con[l + 1] > clamp_spacing_con[l])
-                                    {
-                                        temp_value = clamp_spacing_con[l];
-                                        clamp_spacing_con[l] = clamp_spacing_con[l + 1];
-                                        clamp_spacing_con[l + 1] = temp_value;
-                                    }
-                                }
-                            }
+                            Array.Sort(clamp_spacing_con, (a,b)=>b.CompareTo(a));
 
-                            if (clamp_spacing_con[io] - clamp_spacing_con[io - 1] < 8)
+                            if (clamp_spacing_con[io] - clamp_spacing_con[io + 1] < 8)
                             {
                                 if (io >= 2)
                                 {
@@ -811,9 +790,8 @@ namespace ColumnDesign.Methods
                                 {
                                     clamp_spacing_con[io] = clamp_spacing_con[io + 1] + 8;
                                 }
-
-                                goto UpperWinClampSet;
                             }
+                            goto UpperWinClampSet;
 
                             if (clamp_spacing_con[io] - WinPos <= win_clamp_top_max &&
                                 clamp_spacing_con[io] - WinPos >= 0)
@@ -826,14 +804,14 @@ namespace ColumnDesign.Methods
                 }
 
                 UpperWinClampSet:
-                Array.Resize(ref clamp_spacing, n_clamps + 1);
-                clamp_spacing_con[0] = (int) z - clamp_spacing_con[0];
+                Array.Resize(ref clamp_spacing, n_clamps + 2);
+                clamp_spacing[0] = (int) z - clamp_spacing_con[0];
                 for (var i = 1; i < n_clamps; i++)
                 {
-                    clamp_spacing_con[i] = clamp_spacing_con[i - 1] - clamp_spacing_con[i];
+                    clamp_spacing[i] = clamp_spacing_con[i - 1] - clamp_spacing_con[i];
                 }
 
-                clamp_spacing[n_clamps] = clamp_spacing_con[clamp_spacing_con.Length - 2];
+                clamp_spacing[n_clamps+1] = clamp_spacing_con[clamp_spacing_con.Length - 2];
             }
 
             n_reinf_angles = 0;
@@ -899,7 +877,7 @@ namespace ColumnDesign.Methods
             int n = 0;
             do
             {
-                k++;
+                n++;
             } while (clamp_spacing_con[n] > z * 0.7);
 
             int brace_clamp;
@@ -955,7 +933,6 @@ namespace ColumnDesign.Methods
             // #####################################################################################
             //                                                                                   T E X T
             // #####################################################################################
-            double[] pt_click;
             string qty_text;
             var pt_o = new double[2];
             var pt1 = new double[2];
@@ -963,7 +940,6 @@ namespace ColumnDesign.Methods
             var pt3 = new double[2];
             pt_o[0] = 20.23568507;
             pt_o[1] = 5.17943146;
-            pt_o[2] = 0;
             pt1[0] = pt_o[0] + 448.4;
             pt1[1] = pt_o[1] + 360;
             pt2[0] = pt1[0] + 0;
@@ -975,41 +951,41 @@ namespace ColumnDesign.Methods
             // #####################################################################################
             //                                                                                        D R A W I N G
             // #####################################################################################
-            var ptA = new double[3];
-            var ptB = new double[3];
-            var ptW = new double[3];
-            var ptE = new double[3];
-            var pt4 = new double[3];
-            var pt5 = new double[3];
-            var pt6 = new double[3];
-            var pt7 = new double[3];
-            var pt8 = new double[3];
-            var pt9 = new double[3];
-            var pt10 = new double[3];
-            var pt11 = new double[3];
-            var pt12 = new double[3];
-            var pt13 = new double[3];
-            var pt14 = new double[3];
-            var pt15 = new double[3];
-            var pt16 = new double[3];
-            var pt17 = new double[3];
-            var pt18 = new double[3];
-            var pt20 = new double[3];
-            var pt21 = new double[3];
-            var pt22 = new double[3];
-            var pt23 = new double[3];
-            var pt24 = new double[3];
-            var pt25 = new double[3];
-            var pt26 = new double[3];
-            var pt27 = new double[3];
-            var pt28 = new double[3];
-            var pt29 = new double[3];
-            var pt30 = new double[3];
-            var pt31 = new double[3];
-            var pt32 = new double[3];
-            var pt33 = new double[3];
-            var pt34 = new double[3];
-            var pt_blk = new double[3];
+            var ptA = new double[2];
+            var ptB = new double[2];
+            var ptW = new double[2];
+            var ptE = new double[2];
+            var pt4 = new double[2];
+            var pt5 = new double[2];
+            var pt6 = new double[2];
+            var pt7 = new double[2];
+            var pt8 = new double[2];
+            var pt9 = new double[2];
+            var pt10 = new double[2];
+            var pt11 = new double[2];
+            var pt12 = new double[2];
+            var pt13 = new double[2];
+            var pt14 = new double[2];
+            var pt15 = new double[2];
+            var pt16 = new double[2];
+            var pt17 = new double[2];
+            var pt18 = new double[2];
+            var pt20 = new double[2];
+            var pt21 = new double[2];
+            var pt22 = new double[2];
+            var pt23 = new double[2];
+            var pt24 = new double[2];
+            var pt25 = new double[2];
+            var pt26 = new double[2];
+            var pt27 = new double[2];
+            var pt28 = new double[2];
+            var pt29 = new double[2];
+            var pt30 = new double[2];
+            var pt31 = new double[2];
+            var pt32 = new double[2];
+            var pt33 = new double[2];
+            var pt34 = new double[2];
+            var pt_blk = new double[2];
             bool DrawB;
             bool DrawW;
             if (window == false && Math.Abs(x - y) < 0.001)
