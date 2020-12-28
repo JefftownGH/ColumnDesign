@@ -4,10 +4,11 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ColumnDesign.Modules;
 using ColumnDesign.UI;
+using ColumnDesign.ViewModel;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.ConvertNumberToFeetInches;
 using static ColumnDesign.Modules.ImportMatrixFunction;
 using static ColumnDesign.Modules.ReadSizesFunction;
-using static ColumnDesign.Modules.ImportMatrixFunction;
 using static ColumnDesign.Modules.UpdatePly_Function;
 
 namespace ColumnDesign.Methods
@@ -16,6 +17,7 @@ namespace ColumnDesign.Methods
     {
         private static Document _doc;
         private static ColumnCreatorView _ui;
+        private static ColumnCreatorViewModel _vm;
         private static double win_clamp_top_max = 5;
         private static int win_clamp_bot_max = 4;
         private const int bot_clamp_gap = 8;
@@ -23,10 +25,11 @@ namespace ColumnDesign.Methods
         private const double WinGap = 6;
         private const double WinStudOff = 1;
 
-        public static void CreateGates(Document doc, ColumnCreatorView ui)
+        public static void CreateGates(Document doc, ColumnCreatorView ui, ColumnCreatorViewModel vm)
         {
             _doc = doc;
             _ui = ui;
+            _vm = vm;
             const DrawingTypes type = DrawingTypes.Gates;
             using var tr = new Transaction(doc, $"Create new {type.ToString().ToLower()} sheet");
             tr.Start();
@@ -75,16 +78,11 @@ namespace ColumnDesign.Methods
             bool window = false;
             bool WinX;
             bool WinY;
-            double WinPos;
-            double WinGap;
-            double WinStudOff;
 
-            WinX = _ui.WindowX.IsChecked == true;
-            WinY = _ui.WindowY.IsChecked == true;
+            WinX = _vm.WindowX;
+            WinY = _vm.WindowY;
             if (WinX || WinY) window = true;
             WinPos = ConvertToNum(_ui.WinDim2.Text);
-            WinGap = 6;
-            WinStudOff = 1;
             int[,] stud_matrix;
             var ply_thk = 0.75;
             var chamf_thk = 0.75;
@@ -98,7 +96,7 @@ namespace ColumnDesign.Methods
             y = ConvertToNum(_ui.LengthY.Text);
             z = ConvertToNum(_ui.HeightZ.Text);
             n_col = (int) ConvertToNum(_ui.Quantity.Text);
-            // ply_name = ColumnCreator.PlyNameBox
+            ply_name = _ui.PlywoodType.Text;
             if (WinX)
             {
                 x = ConvertToNum(_ui.LengthY.Text);
@@ -197,7 +195,7 @@ namespace ColumnDesign.Methods
 
 
             // #####################################################################################
-            //                                                                                           S T U D S
+            //                             S T U D S
             // #####################################################################################
             int row_num = 0;
             int col_num_x = 0;
@@ -291,18 +289,18 @@ namespace ColumnDesign.Methods
                 push_studs_y = 1;
             }
 
-            double[] stud_spacing_x = new double[n_studs_x - 1];
-            double[] stud_spacing_y = new double[n_studs_y - 1];
+            double[] stud_spacing_x = new double[n_studs_x];
+            double[] stud_spacing_y = new double[n_studs_y];
             double available_2x2_x;
             double available_2x2_y;
             double min_2x2_gap = 1.625;
             int AFB_x2;
-            for (var i = 0; i < n_studs_x - 1; i++)
+            for (var i = 0; i < n_studs_x; i++)
             {
                 stud_spacing_x[i] = stud_start_offset + i * (3.5 + avg_gap_x);
             }
 
-            for (var i = 0; i < n_studs_y - 1; i++)
+            for (var i = 0; i < n_studs_y; i++)
             {
                 stud_spacing_y[i] = stud_start_offset + i * (3.5 + avg_gap_y);
             }
@@ -399,7 +397,7 @@ namespace ColumnDesign.Methods
             EndOfStudChecks:
 
             // #####################################################################################
-            //                                                                                  P L Y W O O D
+            //                           P L Y W O O D
             // #####################################################################################
 
             double ply_width_x;
@@ -445,7 +443,7 @@ namespace ColumnDesign.Methods
 
             ply_width_x = x + 1.5;
             ply_width_y = y + 1.5;
-            int n_studs_w;
+            int n_studs_w = 0;
             double ply_width_w = 0;
             double[] stud_spacing_w = new double[1];
             int n_studs_e;
@@ -545,7 +543,7 @@ namespace ColumnDesign.Methods
                         else if (l == ply_cuts.GetLength(1))
                         {
                             unique_plys++;
-                            ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys+1);
+                            ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys + 1);
                             ply_cuts[0, unique_plys] = ply_widths[j];
                             ply_cuts[1, unique_plys] = ply_seams[i];
                             ply_cuts[2, unique_plys] = 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
@@ -556,7 +554,7 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            if (ply_cuts[0, ply_cuts.GetLength(1)-1] == 0)
+            if (ply_cuts[0, ply_cuts.GetLength(1) - 1] == 0)
             {
                 ply_cuts = ResizeArray<double>(ply_cuts, 3, ply_cuts.GetLength(1));
                 unique_plys--;
@@ -584,7 +582,7 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            if (ply_cuts[0, ply_cuts.GetLength(1)-1] == 0)
+            if (ply_cuts[0, ply_cuts.GetLength(1) - 1] == 0)
             {
                 ply_cuts = ResizeArray(ply_cuts, 3, ply_cuts.GetLength(1));
                 unique_plys--;
@@ -603,10 +601,10 @@ namespace ColumnDesign.Methods
             // TaskDialog.Show("Message", msg);
 
             // #####################################################################################
-            //                                                                              C L A M P S
+            //                                       C L A M P S
             // #####################################################################################
             var clamp_spacing = new int[] { };
-            double swing_ang;
+            double swing_ang = 0;
             double win_clamp_top_max = 5;
             double win_clamp_bot_max = 4;
             double long_side = 0;
@@ -621,27 +619,27 @@ namespace ColumnDesign.Methods
                 clamp_size = 1;
                 clamp_name = "8/24";
                 clamp_L = 36;
-                clamp_block_bk = GlobalNames.WtClampPlanBack824;
-                clamp_block_op = GlobalNames.WtClampPlanOp824;
-                clamp_block_pr = GlobalNames.WtClampProfile824;
+                clamp_block_bk = "VBA_8-24_CLAMP_PLAN_BACK";
+                clamp_block_op = "VBA_8-24_CLAMP_PLAN_OP";
+                clamp_block_pr = "VBA_8-24_CLAMP_PROFILE";
             }
             else if (_ui.RbColumn2436.IsChecked == true || _ui.RbColumnCustom.IsChecked == true && bigSide <= 36)
             {
                 clamp_size = 2;
                 clamp_L = 48;
                 clamp_name = "12/36";
-                clamp_block_bk = GlobalNames.WtClampPlanBack1236;
-                clamp_block_op = GlobalNames.WtClampPlanOp1236;
-                clamp_block_pr = GlobalNames.WtClampProfile1236;
+                clamp_block_bk = "VBA_12-36_CLAMP_PLAN_BACK";
+                clamp_block_op = "VBA_12-36_CLAMP_PLAN_OP";
+                clamp_block_pr = "VBA_12-36_CLAMP_PROFILE";
             }
             else if (_ui.RbColumn3648.IsChecked == true || _ui.RbColumnCustom.IsChecked == true && bigSide <= 48)
             {
                 clamp_size = 3;
                 clamp_L = 60;
                 clamp_name = "24/48";
-                clamp_block_bk = GlobalNames.WtClampPlanBack2448;
-                clamp_block_op = GlobalNames.WtClampPlanOp2448;
-                clamp_block_pr = GlobalNames.WtClampProfile2448;
+                clamp_block_bk = "VBA_24-48_CLAMP_PLAN_BACK";
+                clamp_block_op = "VBA_24-48_CLAMP_PLAN_OP";
+                clamp_block_pr = "VBA_24-48_CLAMP_PROFILE";
             }
             else throw new Exception("Error: Column is too wide (>48\") in one dimension");
 
@@ -675,10 +673,11 @@ namespace ColumnDesign.Methods
             {
                 if (clamp_matrix[row_num, i] == 0)
                 {
-                    Array.Resize(ref clamp_spacing, k-1);
+                    Array.Resize(ref clamp_spacing, k - 1);
                     break;
                 }
-                clamp_spacing[i] = clamp_matrix[row_num, i+1];
+
+                clamp_spacing[i] = clamp_matrix[row_num, i + 1];
                 k++;
             }
 
@@ -741,10 +740,10 @@ namespace ColumnDesign.Methods
                         if (WinPos - clamp_spacing[i] > win_clamp_bot_max)
                         {
                             n_clamps++;
-                            Array.Resize(ref clamp_spacing_con, n_clamps+1);
-                            for (var j = i; j < n_clamps-1; j++)
+                            Array.Resize(ref clamp_spacing_con, n_clamps + 1);
+                            for (var j = i; j < n_clamps - 1; j++)
                             {
-                                clamp_spacing_con[n_clamps - j + i-1] = clamp_spacing_con[n_clamps - j + i - 2];
+                                clamp_spacing_con[n_clamps - j + i - 1] = clamp_spacing_con[n_clamps - j + i - 2];
                             }
 
                             clamp_spacing_con[i] = (int) WinPos - (int) win_clamp_bot_max;
@@ -767,17 +766,17 @@ namespace ColumnDesign.Methods
 
                 LowerWinClampSet:
                 int io;
-                for (var i = 0; i < clamp_spacing_con.Length-1; i++)
+                for (var i = 0; i < clamp_spacing_con.Length - 1; i++)
                 {
-                    io = clamp_spacing_con.Length - i-2;
+                    io = clamp_spacing_con.Length - i - 2;
                     if (clamp_spacing_con[io] > WinPos)
                     {
                         if ((clamp_spacing_con[io] - WinPos) > win_clamp_top_max)
                         {
                             n_clamps++;
-                            Array.Resize(ref clamp_spacing_con, n_clamps+1);
+                            Array.Resize(ref clamp_spacing_con, n_clamps + 1);
                             clamp_spacing_con[clamp_spacing_con.Length - 1] = (int) WinPos + (int) win_clamp_top_max;
-                            Array.Sort(clamp_spacing_con, (a,b)=>b.CompareTo(a));
+                            Array.Sort(clamp_spacing_con, (a, b) => b.CompareTo(a));
 
                             if (clamp_spacing_con[io] - clamp_spacing_con[io + 1] < 8)
                             {
@@ -791,6 +790,7 @@ namespace ColumnDesign.Methods
                                     clamp_spacing_con[io] = clamp_spacing_con[io + 1] + 8;
                                 }
                             }
+
                             goto UpperWinClampSet;
 
                             if (clamp_spacing_con[io] - WinPos <= win_clamp_top_max &&
@@ -811,7 +811,7 @@ namespace ColumnDesign.Methods
                     clamp_spacing[i] = clamp_spacing_con[i - 1] - clamp_spacing_con[i];
                 }
 
-                clamp_spacing[n_clamps+1] = clamp_spacing_con[clamp_spacing_con.Length - 2];
+                clamp_spacing[n_clamps + 1] = clamp_spacing_con[clamp_spacing_con.Length - 2];
             }
 
             n_reinf_angles = 0;
@@ -848,7 +848,7 @@ namespace ColumnDesign.Methods
             }
 
             // #####################################################################################
-            //                                                               M I S C E L L A N E O U S
+            //                            M I S C E L L A N E O U S
             // #####################################################################################
 
             int n_bolts;
@@ -931,9 +931,9 @@ namespace ColumnDesign.Methods
             }
 
             // #####################################################################################
-            //                                                                                   T E X T
+            //                         T E X T
             // #####################################################################################
-            string qty_text;
+            string qty_text = "";
             var pt_o = new double[2];
             var pt1 = new double[2];
             var pt2 = new double[2];
@@ -946,10 +946,97 @@ namespace ColumnDesign.Methods
             pt2[1] = pt1[1] + 7;
             pt3[0] = pt1[0] + 0;
             pt3[1] = pt1[1] - 52;
-            //TODO TEXT
+            var text = $"• COLUMN SIZE = {x}' X + {y}'\n" +
+                       $"• NUMBER OF COLUMN FORMS = {n_col}-EA\n" +
+                       $"• COLUMN FORM WEIGHT (APPROXIMATE) = {col_wt}-LBS\n" +
+                       $"• PLYWOOD = 3/4'' PLYFORM (\"{ply_name}\"), CLASS-1 (MIN)\n" +
+                       "• COLUMN FORMS AND CLAMP SPACING LAYOUTS FOR L4 X 3 X 1/4 GATES LOK-FAST COLUMN CLAMPS ARE DESIGNED FOR A POUR RATE = FULL LIQUID HEAD U.N.O.\n" +
+                       "• CONTACT THE MCC ENGINEER PRIOR TO ANY CHANGES OR MODIFICATIONS TO THE DETAILS ON THIS SHEET.";
+            //  TODO           Set MTextObject1 = ThisDrawing.ModelSpace.AddMText(pt1, 100, text)
+            // MTextObject1.StyleName = "Arial Narrow"
+            // MTextObject1.Height = 2
+            qty_text = $"PLYWOOD\n{qty_text}";
+
+            for (int i = 0; i < ply_cuts.GetLength(1); i++)
+            {
+                qty_text +=
+                    $"• ({ply_cuts[2, i] * n_col}-EA) = ({n_col}-COL) X ({ply_cuts[2, i]}-EA/COL) @ {ConvertFtIn(ply_cuts[0, i])} WIDE X {ConvertFtIn(ply_cuts[1, i])} LONG 3/4'' PLYWOOD\n";
+            }
+
+            if (window == false)
+            {
+                qty_text +=
+                    $"STUDS\n• ({n_studs_total * n_col}-EA) = ({n_col}-COL) X ({n_studs_total}-EA/COL) @ {ConvertFtIn(z - 0.25)} {stud_name_full}";
+            }
+            else
+            {
+                qty_text += "STUDS\n" +
+                            $"• ({(n_studs_total - n_studs_w) * n_col}-EA) = ({n_col}-COL) X ({(n_studs_total - n_studs_w)}-EA/COL) @ {ConvertFtIn(z - 0.25)} {stud_name_full}\n";
+                qty_text +=
+                    $"• ({n_studs_w * n_col}-EA) = ({n_col}-COL) X ({n_studs_w}-EA/COL) @ {ConvertFtIn(WinPos - WinStudOff - 0.25)} {stud_name_full}\n";
+                qty_text +=
+                    $"• ({n_studs_w * n_col}-EA) = ({n_col}-COL) X ({n_studs_w}-EA/COL) @ {ConvertFtIn(z - WinPos - WinStudOff)} {stud_name_full}";
+            }
+
+            qty_text += "\nCOLUMN CLAMPS\n";
+
+            qty_text +=
+                $"• ({n_clamps * n_col}-EA) = ({n_col}-COL) X ({n_clamps}-EA/COL) @ GATES {clamp_name} LOK-FAST CLAMP ASSEMBLIES (SETS).";
+            if (n_reinf_angles > 0)
+            {
+                qty_text +=
+                    $"\n• ({n_reinf_angles * n_col}-EA) = ({n_col}-COL) X ({n_reinf_angles}-EA/COL) @ GATES REINFORCING ANGLES";
+            }
+
+            var n_nuts = 0;
+            qty_text += "\nFASTENERS\n" +
+                        $"•   ({n_bolts * n_col}-EA) = ({n_col}-COL) X ({n_bolts}-EA/COL) @ 5/16'' X 3'' GATES FLAT HEAD BOLTS\n" +
+                        $"•   ({n_bolts * n_col}-EA) = ({n_col}-COL) X ({n_bolts}-EA/COL) @ 5/16''-18 UNC NYLOK LOCK NUTS\n" +
+                        $"•   ({n_screws * n_col}-EA) = ({n_col}-COL) X ({n_screws}-EA/COL) @ 1/4'' X 2-3/8'' GATES SPAX POWERLAG SCREWS\n";
+            if (n_top_clamps >= 2 || _ui.Picking.IsChecked == true)
+            {
+                qty_text +=
+                    $"•   ({n_col * 2}-EA) = ({n_col}-COL) X (2-EA/COL) @ 1/2''-13 UNC X +/-36'' LONG ALL-THREADED ROD\n";
+                n_nuts += 8;
+            }
+
+            if ((window && (n_top_clamps >= 2 || _ui.Picking.IsChecked == true) && clamp_spacing_con[1] > WinPos) ||
+                (window && n_top_clamps < 2 && _ui.Picking.IsChecked == false))
+            {
+                qty_text +=
+                    $"•   ({n_col}-EA) = ({n_col}-COL) X (2-EA/COL) @ 1/2''-13 UNC X +/-14'' LONG ALL-THREADED ROD\n";
+                n_nuts += 4;
+            }
+
+            if (n_nuts > 0)
+            {
+                qty_text +=
+                    $"•   ({n_nuts * n_col}-EA) = ({n_col}-COL) X ({n_nuts}-EA/COL) @ 1/2''-13 UNC NYLOK LOCK NUTS\n" +
+                    $"•   ({n_nuts * n_col}-EA) = ({n_col}-COL) X ({n_nuts}-EA/COL) @ 1/2'' STANDARD FLAT WASHER\n";
+            }
+
+            qty_text += "3/4'' GATES PLASTIC CHAMFER (BASED ON 12' CHAMFER LENGTHS)\n" +
+                        $"•   ({n_col * n_chamf}-EA) = ({n_col}-COL) X ({n_chamf}-EA/COL) @ {chamf_length}'-0'' LONG PIECES";
+            qty_text += "\nGATES ADJUSTABLE FORM BRACES (INCLUDING FORM BASE PLATES)\n" +
+                        $"•   ({n_col * 3}-EA) = ({n_col}-COL) X (3EA/COL) {brace_name} LONG GATES AFB\n";
+            if (col_wt <= 2400)
+            {
+                qty_text += "HOISTING SLINGS\n" +
+                            $"•   ({n_col * 2}-EA) = ({n_col}-COL) X (2EA/COL) ENDLESS ROUND SLINGS; LIFTEX P/N ''ENR1'', PURPLE.\n" +
+                            "SWL = 2400-LBS. PER SLING IN CHOKER CONFIGURATION.";
+            }
+            else
+            {
+                qty_text += "HOISTING SLINGS\n" +
+                            $"•   ({n_col * 2}-EA) = ({n_col}-COL) X (2EA/COL) ENDLESS ROUND SLINGS; LIFTEX P/N ''ENR2'', GREEN.\n" +
+                            "SWL = 4800-LBS. PER SLING IN CHOKER CONFIGURATION.";
+            }
+            // TODO Set MTextObject1 = ThisDrawing.ModelSpace.AddMText(pt3, 100, qty_text)
+            // MTextObject1.Height = 2
+            // MTextObject1.StyleName = "Arial Narrow" 'Forces use of Arial Narrow text style
 
             // #####################################################################################
-            //                                                                                        D R A W I N G
+            //                                   D R A W I N G
             // #####################################################################################
             var ptA = new double[2];
             var ptB = new double[2];
@@ -986,8 +1073,8 @@ namespace ColumnDesign.Methods
             var pt33 = new double[2];
             var pt34 = new double[2];
             var pt_blk = new double[2];
-            bool DrawB;
-            bool DrawW;
+            bool DrawB = false;
+            bool DrawW = false;
             if (window == false && Math.Abs(x - y) < 0.001)
             {
                 ptA[0] = pt_o[0] + 245;
@@ -1029,11 +1116,1073 @@ namespace ColumnDesign.Methods
                 DrawW = true;
             }
 
-            // _doc.Create.NewFamilyInstance(clampPlanBack824Location,
-            //     GetFamilySymbolByName(GlobalNames.WtClampPlanBack824), draftingView);
-            // _doc.Create.NewFamilyInstance(clampPlanOp824Location,
-            //     GetFamilySymbolByName(GlobalNames.WtClampPlanOp824),
-            //     draftingView);
+            FamilyInstance family;
+            for (var i = 0; i < n_studs_x - 1; i++)
+            {
+                pt6[0] = ptA[0] + ply_width_x + chamf_thk - 3.5 - stud_spacing_x[i];
+                pt6[1] = ptA[1] + stud_base_gap;
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
+                    draftingView);
+                RotateFamily(family, 90);
+            }
+
+            if (DrawB)
+            {
+                for (var i = 0; i < n_studs_y - 1; i++)
+                {
+                    pt6[0] = ptB[0] + ply_width_y + chamf_thk - 3.5 - stud_spacing_y[i];
+                    pt6[1] = ptB[1] + stud_base_gap;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
+                        draftingView);
+                    RotateFamily(family, 90);
+                }
+            }
+
+            if (DrawW)
+            {
+                for (var i = 0; i < n_studs_w - 1; i++)
+                {
+                    pt6[0] = ptW[0] + ply_width_w + chamf_thk - 3.5 - stud_spacing_w[i];
+                    pt6[1] = ptW[1] + stud_base_gap;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
+                        draftingView);
+                    RotateFamily(family, 90);
+                    pt6[1] = ptW[1] + WinPos + WinStudOff + WinGap;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
+                        draftingView);
+                    RotateFamily(family, 90);
+                }
+            }
+
+            pt4[1] = ptA[1];
+            foreach (var t in ply_seams)
+            {
+                pt4[0] = ptA[0];
+                pt4[1] = pt4[1] + t;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt4), GetFamilySymbolByName("VBA_PLY_SHEET"), draftingView);
+                if (DrawB)
+                {
+                    pt4[0] = ptB[0];
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt4), GetFamilySymbolByName("VBA_PLY_SHEET"),
+                        draftingView);
+                }
+            }
+
+            if (DrawW)
+            {
+                pt4[0] = ptW[0];
+                pt4[1] = ptW[1];
+                for (var i = 0; i < ply_seams_win.Length; i++)
+                {
+                    pt4[1] += ply_seams_win[i];
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt4), GetFamilySymbolByName("VBA_PLY_SHEET"),
+                        draftingView);
+                    if (Math.Abs(pt4[1] - ptW[1] - WinPos) < 0.001)
+                    {
+                        pt4[1] += WinGap;
+                    }
+                }
+            }
+
+            var ply_tot = 0d;
+            for (var i = 0; i < ply_seams.Length; i++)
+            {
+                ply_tot += ply_seams[i];
+                foreach (var t in stud_spacing_x)
+                {
+                    pt29[0] = ptA[0] + ply_width_x + chamf_thk - t - 1.75;
+                    pt29[1] = ptA[1] + ply_tot - 2;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                        draftingView);
+                    if (i != ply_seams.Length - 1)
+                    {
+                        pt29[0] = ptA[0] + ply_width_x + chamf_thk - t - 1.75;
+                        pt29[1] = ptA[1] + ply_tot + 2;
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                            draftingView);
+                    }
+                }
+            }
+
+            foreach (var t in stud_spacing_x)
+            {
+                pt29[0] = ptA[0] + ply_width_x + chamf_thk - t - 1.75;
+                pt29[1] = ptA[1] + 2;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                    draftingView);
+            }
+
+            if (DrawB == false)
+            {
+                pt_blk[0] = ptA[0] + ply_width_x + chamf_thk - stud_spacing_x[1] - 1.75;
+                pt_blk[1] = ptA[1] + ply_seams[1] - 2;
+                if (ply_seams[0] < 48 && (ply_seams.Length) > 1)
+                {
+                    pt_blk[1] = pt_blk[1] + ply_seams[1];
+                }
+
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk),
+                    GetFamilySymbolByName("VBA_ELEVATION_NOTES_SCREWS"),
+                    draftingView);
+                pt_blk[0] = ptA[0] + ply_width_x;
+                pt_blk[1] = ptA[1];
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk),
+                    GetFamilySymbolByName("VBA_ELEVATION_NOTES_SCREWS"),
+                    draftingView);
+            }
+
+            if (DrawB)
+            {
+                ply_tot = 0;
+                for (var i = 0; i < ply_seams.Length; i++)
+                {
+                    ply_tot += ply_seams[i];
+                    foreach (var t in stud_spacing_y)
+                    {
+                        pt29[0] = ptB[0] + ply_width_y + chamf_thk - t - 1.75;
+                        pt29[1] = ptB[1] + ply_tot - 2;
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                            draftingView);
+                        if (i != ply_seams.Length - 1)
+                        {
+                            pt29[0] = ptB[0] + ply_width_y + chamf_thk - t - 1.75;
+                            pt29[1] = ptB[1] + ply_tot + 2;
+                            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                                draftingView);
+                        }
+                    }
+                }
+
+                for (var i = 0; i < stud_spacing_y.Length; i++)
+                {
+                    pt29[0] = ptB[0] + ply_width_y + chamf_thk - stud_spacing_y[i] - 1.75;
+                    pt29[1] = ptB[1] + 2;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                        draftingView);
+                }
+
+                if (DrawW == false)
+                {
+                    pt_blk[0] = ptB[0] + ply_width_y + chamf_thk - stud_spacing_y[1] - 1.75;
+                    pt_blk[1] = ptB[1] + ply_seams[0] - 2;
+                    if (ply_seams[0] < 48 && ply_seams.Length > 1)
+                    {
+                        pt_blk[1] = pt_blk[1] + ply_seams[1];
+                    }
+
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk),
+                        GetFamilySymbolByName("VBA_ELEVATION_NOTES_SCREWS"),
+                        draftingView);
+                    pt_blk[0] = ptB[0] + ply_width_y;
+                    pt_blk[1] = ptB[1];
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_ELEVATION_NOTES"),
+                        draftingView);
+                }
+                else if (DrawW)
+                {
+                    pt_blk[0] = ptB[0] + ply_width_y + chamf_thk - stud_spacing_y[stud_spacing_y.Length - 1] - 1.75;
+                    pt_blk[1] = ptB[1] + ply_seams[0] - 2;
+                    if (ply_seams[0] < 48 && ply_seams.Length > 1)
+                    {
+                        pt_blk[1] = pt_blk[1] + ply_seams[1];
+                    }
+
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk),
+                        GetFamilySymbolByName("VBA_ELEVATION_NOTES_SCREWS_MIRRORED"),
+                        draftingView);
+                    pt_blk[0] = ptB[0] + ply_width_y;
+                    pt_blk[1] = ptB[1];
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk),
+                        GetFamilySymbolByName("VBA_ELEVATION_NOTES_SCREWS_MIRRORED"),
+                        draftingView);
+                }
+            }
+
+            if (DrawW)
+            {
+                ply_tot = 0;
+                for (var i = 0; i < ply_seams_win.Length; i++)
+                {
+                    ply_tot += ply_seams_win[i];
+                    for (var j = 0; j < stud_spacing_w.Length; j++)
+                    {
+                        pt29[0] = ptW[0] + ply_width_w + chamf_thk - stud_spacing_w[j] - 1.75;
+                        pt29[1] = ptW[1] + ply_tot - 2;
+                        if (Math.Abs(ply_tot - WinPos) < 0.001)
+                        {
+                            pt29[1] -= WinStudOff;
+                        }
+
+                        if (ply_tot > WinPos)
+                        {
+                            pt29[1] += WinGap;
+                        }
+
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                            draftingView);
+                        if (i != ply_seams_win.Length - 1)
+                        {
+                            pt29[0] = ptW[0] + ply_width_w + chamf_thk - stud_spacing_w[j] - 1.75;
+                            pt29[1] = ptW[1] + ply_tot + 2;
+                            if (Math.Abs(ply_tot - WinPos) < 0.001)
+                            {
+                                pt29[1] += WinStudOff + WinGap;
+                            }
+
+                            if (ply_tot > WinPos)
+                            {
+                                pt29[1] += WinGap;
+                            }
+
+                            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                                draftingView);
+                        }
+                    }
+                }
+
+                foreach (var t in stud_spacing_w)
+                {
+                    pt29[0] = ptW[0] + ply_width_w + chamf_thk - t - 1.75;
+                    pt29[1] = ptW[1] + 2;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt29), GetFamilySymbolByName("VBA_SCREW_HEAD"),
+                        draftingView);
+                }
+            }
+
+            pt18[0] = ptA[0] + ply_width_x;
+            pt18[1] = ptA[1] + stud_base_gap;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
+            if (DrawB)
+            {
+                pt18[0] = ptB[0] + ply_width_y;
+                pt18[1] = ptB[1] + stud_base_gap;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
+            }
+
+            if (DrawW)
+            {
+                pt18[0] = ptW[0] + ply_width_w;
+                pt18[1] = ptW[1] + stud_base_gap;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
+                pt18[0] = ptW[0] + ply_width_w;
+                pt18[1] = ptW[1] + WinPos + WinGap;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
+            }
+
+            if (window == false)
+            {
+                for (var i = 0; i < n_studs_e - 1; i++)
+                {
+                    pt20[0] = ptE[0] + stud_spacing_e[i];
+                    pt20[1] = ptE[1] + stud_base_gap;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20), GetFamilySymbolByName(stud_face_block),
+                        draftingView);
+                    RotateFamily(family, 90);
+                }
+            }
+            else if (window)
+            {
+                if (DrawW)
+                {
+                    for (var i = 0; i < n_studs_e - 1; i++)
+                    {
+                        pt20[0] = ptE[0] + stud_spacing_e[i];
+                        pt20[1] = ptE[1] + stud_base_gap;
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20),
+                            GetFamilySymbolByName(stud_face_block),
+                            draftingView);
+                        RotateFamily(family, 90);
+
+                        pt21[0] = ptE[0] + stud_spacing_e[i];
+                        pt21[1] = ptE[1] + WinPos + WinStudOff;
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt21),
+                            GetFamilySymbolByName(stud_face_block),
+                            draftingView);
+                        RotateFamily(family, 90);
+                    }
+                }
+            }
+
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(new double[] {ptE[0] + chamf_thk, ptE[1]}),
+                GetFamilySymbolByName("VBA_RECTANGLE"),
+                draftingView);
+            _doc.Regenerate();
+            family.LookupParameter("xB")
+                .Set(UnitUtils.ConvertToInternalUnits(ply_width_e, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("yB").Set(UnitUtils.ConvertToInternalUnits(z, DisplayUnitType.DUT_MILLIMETERS));
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(ptE), GetFamilySymbolByName("VBA_PLY"),
+                draftingView);
+            RotateFamily(family, 90);
+            if (window)
+            {
+                pt20[0] = ptE[0] + chamf_thk;
+                pt20[1] = ptE[1] + WinPos;
+                pt21[0] = ptE[0] + ply_width_e + chamf_thk;
+                pt21[1] = ptE[1] + WinPos;
+                _doc.Create.NewDetailCurve(draftingView, Line.CreateBound(GetXYZByPoint(pt20), GetXYZByPoint(pt21)));
+            }
+
+            if (window)
+            {
+                if (z - WinPos < 18)
+                {
+                    pt20[1] = ptE[1] + z;
+                }
+                else
+                {
+                    pt20[1] = ptE[1] + WinPos + 18;
+                }
+
+                pt21[1] = pt20[1] - 36;
+                var Inserted2x2Note = false;
+                for (var i = 0; i < stud_spacing_w.Length - 1; i++)
+                {
+                    if (stud_spacing_w[i + 1] - stud_spacing_w[i] > min_2x2_gap)
+                    {
+                        pt20[0] = ptE[0] + stud_spacing_w[i] + 3.5;
+                        pt21[0] = pt20[0] + 1.5;
+                        var pt20F = new[] {pt20[0], pt20[1] - 36};
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20F),
+                            GetFamilySymbolByName("VBA_RECTANGLE"),
+                            draftingView);
+                        _doc.Regenerate();
+                        family.LookupParameter("xB")
+                            .Set(UnitUtils.ConvertToInternalUnits(1.5, DisplayUnitType.DUT_MILLIMETERS));
+                        family.LookupParameter("yB")
+                            .Set(UnitUtils.ConvertToInternalUnits(36, DisplayUnitType.DUT_MILLIMETERS));
+                        if (Inserted2x2Note == false)
+                        {
+                            Inserted2x2Note = true;
+                            for (var j = 0; j < n_clamps - 2; j++)
+                            {
+                                if (clamp_spacing_con[i] < WinPos)
+                                {
+                                    pt18[0] = ptE[0] + stud_spacing_w[stud_spacing_w.Length - 2] + 3.5 + 1.5;
+                                    pt18[1] = ptE[1] + clamp_spacing_con[j] - 6;
+                                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20),
+                                        GetFamilySymbolByName("VBA_2X2_NOTES"),
+                                        draftingView);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            pt21[0] = ptE[0] + chamf_thk + ply_width_e;
+            pt21[1] = ptE[1] + z;
+            //TODO Call DrawDimLin(pt21(0) - clamp_L + 3.75, pt21(1) - clamp_spacing(1), ptE(0) - ply_thk, pt21(1), pt21(0) - clamp_L + 3.75 - 4, (pt21(1) * 2 - clamp_spacing(1)) / 2, pi / 2)     'Add top dim
+            for (int i = 0; i < n_clamps; i++)
+            {
+                pt21[1] -= clamp_spacing[i];
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt21), GetFamilySymbolByName(clamp_block_pr),
+                    draftingView);
+                if (i != 0)
+                {
+                    //TODO Call DrawDim(pt21(0) - clamp_L + 3.75, pt21(1), pt21(0) - clamp_L + 3.75, pt21(1) + clamp_spacing(i), pt21(0) - clamp_L + 3.75 - 4, (pt21(1) * 2 + clamp_spacing(i)) / 2)
+                }
+
+                pt22[0] = pt21[0] - clamp_L + 3.75 - 12;
+                pt22[1] = ptE[1] + clamp_spacing_con[i] + 1.5;
+                var clamp_str = $"{clamp_spacing_con[i]}\"";
+                // TODO ct2 = ThisDrawing.ModelSpace.AddMText(pt22, 9, clamp_str)
+                // TODO MTextObject2.Height = 2.5
+                pt25[0] = ptE[0] + chamf_thk + ply_width_e + 9;
+                pt25[1] = pt21[1] + 5.75 - 3 * (WinY == true ? 1 : 0);
+                switch (clamp_size)
+                {
+                    case 1 when ply_width_e - 1.5 >= 19:
+                    case 2 when ply_width_e - 1.5 >= 31:
+                    case 3 when ply_width_e - 1.5 >= 43:
+                        pt25[1] -= 3;
+                        break;
+                }
+
+                if (i <= n_top_clamps)
+                {
+                    //TODO Set MTextObject2 = ThisDrawing.ModelSpace.AddMText(pt25, 24, "TOP CLAMP")
+                }
+                else
+                {
+                    // TODO Set MTextObject2 = ThisDrawing.ModelSpace.AddMText(pt25, 17, "CLAMP")
+                }
+
+                // TODO MTextObject2.AttachmentPoint = acAttachmentPointTopLeft
+                // TODO MTextObject2.Height = 2.5
+            }
+
+            // TODO Call DrawDimLin(pt21(0) - clamp_L + 3.75, ptE(1) + bot_clamp_gap, pt21(0) - x - 8, ptE(1), pt21(0) - clamp_L + 3.75 - 4, (2 * ptE(1) + bot_clamp_gap) / 2, pi / 2) 'Add bottom dim
+            if (n_top_clamps >= 2 || _ui.Picking.IsChecked == true)
+            {
+                pt27[0] = ptE[0] + chamf_thk + 2;
+                pt27[1] = ptE[1] + z - clamp_spacing[1] + 2.25 - 0.5 * (WinY ? 1 : 0);
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_COIL_ROD"),
+                    draftingView);
+                RotateFamily(family, 180);
+                if (ply_width_w >= 37.5)
+                {
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_COIL_ROD_NOTES"),
+                        draftingView);
+                }
+                else if (_ui.Picking.IsChecked == true)
+                {
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_COIL_ROD_NOTES_C"),
+                        draftingView);
+                }
+                else
+                {
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_COIL_ROD_NOTES_B"),
+                        draftingView);
+                }
+
+                pt27[1] -= 2;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                    draftingView);
+                pt27[1] -= 0.25;
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                    draftingView);
+                RotateFamily(family, 180);
+                pt27[1] -= clamp_spacing[1];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                    draftingView);
+                RotateFamily(family, 180);
+                pt27[1] += 0.25;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                    draftingView);
+            }
+
+            if (window)
+            {
+                if (n_top_clamps >= 2 || _ui.Picking.IsChecked == true)
+                {
+                    if (clamp_spacing[1] > WinPos)
+                    {
+                        pt27[0] = ptE[0] + chamf_thk + ply_width_w / 2;
+                        pt27[1] = ptE[1] + WinPos + win_clamp_top_max + 2.625 - 0.5 * (WinY ? 1 : 0);
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27),
+                            GetFamilySymbolByName("VBA_COIL_ROD_14"),
+                            draftingView);
+                        RotateFamily(family, 180);
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27),
+                            GetFamilySymbolByName("VBA_COIL_ROD_NOTES_14"),
+                            draftingView);
+                        pt27[1] -= 2.375;
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                            draftingView);
+                        pt27[1] -= 0.25;
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27),
+                            GetFamilySymbolByName("VBA_NUT_5-8"),
+                            draftingView);
+                        RotateFamily(family, 180);
+                        pt27[1] -= win_clamp_top_max + win_clamp_bot_max - 0.25;
+                        _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                            draftingView);
+                        pt27[1] -= 0.25;
+                        family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27),
+                            GetFamilySymbolByName("VBA_NUT_5-8"),
+                            draftingView);
+                        RotateFamily(family, 180);
+                    }
+                }
+                else
+                {
+                    pt27[0] = ptE[0] + chamf_thk + ply_width_w / 2;
+                    pt27[1] = ptE[1] + WinPos + win_clamp_top_max + 2.625 - 0.5 * (WinY ? 1 : 0);
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27),
+                        GetFamilySymbolByName("VBA_COIL_ROD_14"),
+                        draftingView);
+                    RotateFamily(family, 180);
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_COIL_ROD_NOTES_14"),
+                        draftingView);
+                    pt27[1] -= 2.375;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                        draftingView);
+                    pt27[1] -= 0.25;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                        draftingView);
+                    RotateFamily(family, 180);
+                    pt27[1] -= win_clamp_top_max + win_clamp_bot_max - 0.25;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                        draftingView);
+                    pt27[1] -= 0.25;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt27), GetFamilySymbolByName("VBA_NUT_5-8"),
+                        draftingView);
+                    RotateFamily(family, 180);
+                }
+            }
+
+            if (x > 40)
+            {
+                for (int i = 0; i < clamp_spacing_con.Length - 1; i++)
+                {
+                    if (z - clamp_spacing_con[i] >= 87)
+                    {
+                        if (WinY)
+                        {
+                            pt31[0] = ptE[0] + chamf_thk + (ply_width_e - 36) / 2 + 36;
+                            pt31[1] = ptE[1] + clamp_spacing_con[i] - 0.25;
+                            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt31),
+                                GetFamilySymbolByName("VBA_REINFORCING_ANGLE"),
+                                draftingView);
+                            RotateFamily(family, 180);
+                        }
+                        else
+                        {
+                            pt31[0] = ptE[0] + chamf_thk + (ply_width_e - 36) / 2;
+                            pt31[1] = ptE[1] + clamp_spacing_con[i];
+                            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt31),
+                                GetFamilySymbolByName("VBA_REINFORCING_ANGLE"),
+                                draftingView);
+                        }
+                    }
+                }
+            }
+
+            if (_ui.Regular.IsChecked == true)
+            {
+                pt26[0] = ptE[0] - ply_thk - 1.25;
+                pt26[1] = ptE[1] + z - clamp_spacing[0];
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_A"),
+                    draftingView);
+                pt26[0] = ptE[0] + chamf_thk + ply_width_e + 1.3;
+                pt26[1] = ptE[1] + z - clamp_spacing[0] + 3l;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_B"),
+                    draftingView);
+            }
+            else if (_ui.Picking.IsChecked == true)
+            {
+                pt26[0] = ptE[0] - ply_thk - 1.5;
+                pt26[1] = ptE[1] + z - clamp_spacing[0] - 0.25;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_A"),
+                    draftingView);
+                pt26[0] = ptE[0] + chamf_thk + ply_width_e;
+                pt26[1] = ptE[1] + z - clamp_spacing[0] - 0.25;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_B"),
+                    draftingView);
+            }
+
+            pt28[0] = ptE[0] + chamf_thk + ply_width_e + 4;
+            pt28[1] = ptE[1] + clamp_spacing_con[brace_clamp - 1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_AFB_SIDE"),
+                draftingView);
+            pt28[0] = pt28[0] + 1.9375;
+            pt28[1] = pt28[1] + 0.6789;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_BRACE_ANGLE"),
+                draftingView);
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName(brace_block),
+                draftingView);
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_BRACE_NOTES"),
+                draftingView);
+            pt28[0] = pt28[0] - 5.9375;
+            pt28[1] = ptE[1] + clamp_spacing_con[chain_clamp - 1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_CHAIN"),
+                draftingView);
+            pt28[0] = ptE[0] + 4.68;
+            pt28[1] = ptE[1] + clamp_spacing_con[brace_clamp - 1];
+            if (window == false)
+            {
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_AFB_FACE"),
+                    draftingView);
+            }
+
+            pt20[0] = ptE[0] - ply_thk - 1.5 - 3.5;
+            pt20[1] = ptE[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt28), GetFamilySymbolByName("VBA_2X4"),
+                draftingView);
+            pt20[0] = ptE[0] + chamf_thk + ply_width_e;
+            pt20[1] = ptE[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20), GetFamilySymbolByName("VBA_2X4"),
+                draftingView);
+            pt20[0] = ptE[0] - ply_thk - 1.5 - 6;
+            pt20[1] = ptE[1] + 3;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20), GetFamilySymbolByName("VBA_2X4_SIDE"),
+                draftingView);
+            pt30[0] = ptE[0] + chamf_thk + ply_width_e + 6;
+            pt30[1] = ptE[1] + 2.25;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_DOWN_PLATE_NOTES"),
+                draftingView);
+            pt8[0] = ptA[0] + ply_width_x;
+            pt8[1] = ptA[1] + z + 18 + (window ? 1 : 0) * WinGap;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt8), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, 180);
+            for (var j = 0; j < n_studs_x; j++)
+            {
+                pt11[0] = ptA[0] + ply_width_x + chamf_thk - 3.5 - stud_spacing_x[j];
+                pt11[1] = ptA[1] + z + 18 + (window ? 1 : 0) * WinGap;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt11), GetFamilySymbolByName(stud_block),
+                    draftingView);
+            }
+
+            if (DrawB)
+            {
+                pt9[0] = ptB[0] + ply_width_y;
+                pt9[1] = ptB[1] + z + 18 + (window ? 1 : 0) * WinGap;
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt9),
+                    GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                    draftingView);
+                RotateFamily(family, 180);
+                for (int j = 0; j < n_studs_y; j++)
+                {
+                    pt11[0] = ptB[0] + ply_width_y + chamf_thk - 3.5 - stud_spacing_y[j];
+                    pt11[1] = ptB[1] + z + 18 + (window ? 1 : 0) * WinGap;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt11), GetFamilySymbolByName(stud_block),
+                        draftingView);
+                }
+            }
+
+            //TODO drawdim
+            // Call DrawDim(pt8(0), pt8(1) - ply_thk, pt8(0) - ply_width_x, pt8(1) - ply_thk, (pt8(0) - ply_width_x - pt8(0)) / 2, pt8(1) - ply_thk - 3) 'Dimension plywood
+            // Call DrawDimLin(pt8(0) + chamf_thk, pt8(1) - ply_thk - 0.5, pt8(0) - ply_width_x, pt8(1) - ply_thk, (pt8(0) - ply_width_x - pt8(0)) / 2, pt8(1) - ply_thk - 6.75, 0) 'Dimension overall panel
+            for (int i = 0; i < n_studs_x; i++)
+            {
+                //     Call DrawDimLin(pt8(0) + chamf_thk - stud_spacing_x(UBound(stud_spacing_x) - i + 1), pt8(1) + 1.5, pt8(0) - ply_width_x, pt8(1), ((pt8(0) - ply_width_x) - (pt8(0) + chamf_thk - stud_spacing_x(UBound(stud_spacing_x) - i + 1))) / 2, pt8(1) + 4 + i * 4, 0) 'Dimension studs from rightmost (in plan) stud
+            }
+
+            // Call DrawDimLin(pt8(0) - stud_spacing_x(UBound(stud_spacing_x)) - 3.5 + chamf_thk, pt8(1) + 1.5, pt8(0) - ply_width_x, pt8(1), ((pt8(0) - ply_width_x) - (pt8(0) - stud_spacing_x(UBound(stud_spacing_x)) - 3.5 + chamf_thk)) / 2, pt8(1) + 4, 0) 'Dimension leftmost (in plan) stud to face of ply
+            // Call DrawDimLin(pt8(0) + chamf_thk - stud_start_offset, pt8(1) + 1.5, pt8(0) + chamf_thk, pt8(1), ((pt8(0) + chamf_thk) - (pt8(0) + chamf_thk - stud_start_offset)) / 2, pt8(1) + 4 * (n_studs_x + 1), 0) 'dimension stud_start_gap
+            if (DrawB)
+            {
+                //     Call DrawDim(pt9(0), pt9(1) - ply_thk, pt9(0) - ply_width_y, pt9(1) - ply_thk, (pt9(0) - ply_width_y - pt9(0)) / 2, pt9(1) - ply_thk - 3) 'Dimension plywood
+                //     Call DrawDimLin(pt9(0) + chamf_thk, pt9(1) - ply_thk - 0.5, pt9(0) - ply_width_y, pt9(1) - ply_thk, (pt9(0) - ply_width_y - pt9(0)) / 2, pt9(1) - ply_thk - 6.75, 0) 'Dimension overall panel
+                for (int i = 0; i < n_studs_y; i++)
+                {
+                    //         Call DrawDimLin(pt9(0) + chamf_thk - stud_spacing_y(UBound(stud_spacing_y) - i + 1), pt9(1) + 1.5, pt9(0) - ply_width_y, pt9(1), ((pt9(0) - ply_width_y) - (pt9(0) + chamf_thk - stud_spacing_y(UBound(stud_spacing_y) - i + 1))) / 2, pt9(1) + 4 + i * 4, 0) 'Dimension studs from rightmost (in plan) stud
+                }
+
+                //     Call DrawDimLin(pt9(0) - stud_spacing_y(UBound(stud_spacing_y)) - 3.5 + chamf_thk, pt9(1) + 1.5, pt9(0) - ply_width_y, pt9(1), ((pt9(0) - ply_width_y) - (pt9(0) - stud_spacing_y(UBound(stud_spacing_y)) - 3.5 + chamf_thk)) / 2, pt9(1) + 4, 0) 'Dimension leftmost (in plan) stud to face of ply
+                //     Call DrawDimLin(pt9(0) + chamf_thk - stud_start_offset, pt9(1) + 1.5, pt9(0) + chamf_thk, pt9(1), ((pt9(0) + chamf_thk) - (pt9(0) + chamf_thk - stud_start_offset)) / 2, pt9(1) + 4 * (n_studs_y + 1), 0) 'dimension stud_start_gap
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt9), GetFamilySymbolByName("VBA_TOP_SECTION_DETAILS1"),
+                    draftingView);
+            }
+
+            if (DrawW)
+            {
+                //     Call DrawDim(pt10(0), pt10(1) - ply_thk, pt10(0) - ply_width_w, pt10(1) - ply_thk, (pt10(0) - ply_width_w - pt10(0)) / 2, pt10(1) - ply_thk - 3) 'Dimension plywood
+                //     Call DrawDimLin(pt10(0) + chamf_thk, pt10(1) - ply_thk - 0.5, pt10(0) - ply_width_w, pt10(1) - ply_thk, (pt10(0) - ply_width_w - pt10(0)) / 2, pt10(1) - ply_thk - 6.75, 0) 'Dimension overall panel
+                for (int i = 0; i < n_studs_w; i++)
+                {
+                    //         Call DrawDimLin(pt10(0) + chamf_thk - stud_spacing_w(UBound(stud_spacing_w) - i + 1), pt10(1) + 1.5, pt10(0) - ply_width_w, pt10(1), ((pt10(0) - ply_width_w) - (pt10(0) + chamf_thk - stud_spacing_w(UBound(stud_spacing_w) - i + 1))) / 2, pt10(1) + 4 + i * 4, 0) 'Dimension studs from rightmost (in plan) stud
+                }
+
+                //     Call DrawDimLin(pt10(0) - stud_spacing_w(UBound(stud_spacing_w)) - 3.5 + chamf_thk, pt10(1) + 1.5, pt10(0) - ply_width_w, pt10(1), ((pt10(0) - ply_width_w) - (pt10(0) - stud_spacing_w(UBound(stud_spacing_w)) - 3.5 + chamf_thk)) / 2, pt10(1) + 4, 0) 'Dimension leftmost (in plan) stud to face of ply
+                //     Call DrawDimLin(pt10(0) + chamf_thk - stud_start_offset, pt10(1) + 1.5, pt10(0) + chamf_thk, pt10(1), ((pt10(0) + chamf_thk) - (pt10(0) + chamf_thk - stud_start_offset)) / 2, pt10(1) + 4 * (n_studs_w + 1), 0) 'dimension stud_start_gap
+            }
+
+            var PlyTemp = ptA[1] + ply_seams[0];
+            // Call DrawDimSuffix(ptA(0) + ply_width_x, ptA(1), ptA(0) + ply_width_x, PlyTemp, ptA(0) + ply_width_x + 6, (PlyTemp - ptA(1)) / 2, " PLYWOOD")
+            if (ply_seams.Length >= 2)
+            {
+                for (int i = 1; i < ply_seams.Length; i++)
+                {
+                    PlyTemp += ply_seams[i];
+                    //         Call DrawDimSuffix(ptA(0) + ply_width_x, PlyTemp - ply_seams(i), ptA(0) + ply_width_x, PlyTemp, ptA(0) + ply_width_x + 6, (PlyTemp - (PlyTemp - ply_seams(i))) / 2, " PLYWOOD")
+                }
+            }
+
+            // Call DrawDimSuffix(ptA(0), ptA(1), ptA(0), ptA(1) + z, ptA(0) - 9, (2 * ptA(1) + z) / 2, " OVERALL HEIGHT")
+            // Call DrawDimSuffix(ptA(0), ptA(1) + z, ptA(0), ptA(1) + stud_base_gap, ptA(0) - 4.5, ((ptA(1) + z) + (ptA(1) + stud_base_gap)) / 2, " STUD")
+            // Call DrawDimSuffix(ptA(0) + ply_width_x, ptA(1) + z, ptA(0), ptA(1) + z, (2 * ptA(0) + ply_width_x) / 2, ptA(1) + z + 4, " PLYWOOD")
+            if (DrawB)
+            {
+                PlyTemp = ptB[1] + ply_seams[0];
+                //     Call DrawDimSuffix(ptB(0) + ply_width_y, ptB(1), ptB(0) + ply_width_y, PlyTemp, ptB(0) + ply_width_y + 6, (PlyTemp - ptB(1)) / 2, " PLYWOOD")
+                if (ply_seams.Length >= 2)
+                {
+                    for (int i = 1; i < ply_seams.Length; i++)
+                    {
+                        PlyTemp += ply_seams[i];
+                        //             Call DrawDimSuffix(ptB(0) + ply_width_y, PlyTemp - ply_seams(i), ptB(0) + ply_width_y, PlyTemp, ptB(0) + ply_width_y + 6, (PlyTemp - (PlyTemp - ply_seams(i))) / 2, " PLYWOOD")
+                    }
+                }
+
+                //     Call DrawDimSuffix(ptB(0), ptB(1), ptB(0), ptB(1) + z, ptB(0) - 9, (2 * ptB(1) + z) / 2, " OVERALL HEIGHT")
+                //     Call DrawDimSuffix(ptB(0), ptB(1) + z, ptB(0), ptB(1) + stud_base_gap, ptB(0) - 4.5, ((ptB(1) + z) + (ptB(1) + stud_base_gap)) / 2, " STUD")
+                //     Call DrawDimSuffix(ptB(0) + ply_width_y, ptB(1) + z, ptB(0), ptB(1) + z, (2 * ptB(0) + ply_width_y) / 2, ptB(1) + z + 4, " PLYWOOD")
+            }
+
+            if (DrawW)
+            {
+                PlyTemp = ptW[1] + ply_seams_win[0];
+                //     Call DrawDimSuffix(ptW(0) + ply_width_w, ptW(1), ptW(0) + ply_width_w, PlyTemp, ptW(0) + ply_width_w + 6, (PlyTemp - ptW(1)) / 2, " PLYWOOD") 'Dim lowest (first) plywood sheet
+                if (ply_seams_win.Length >= 2)
+                {
+                    for (int i = 1; i < ply_seams_win.Length; i++)
+                    {
+                        if (Math.Abs(PlyTemp - ptW[1] - WinPos) < 0.001)
+                        {
+                            PlyTemp += WinGap;
+                        }
+
+                        PlyTemp += ply_seams_win[i];
+                        if (ply_seams_win[i] < 26)
+                        {
+                            //Call DrawDimLinSuffixLeader(ptW(0) + ply_width_w, PlyTemp - ply_seams_win(i), ptW(0) + ply_width_w, PlyTemp, ptW(0) + ply_width_w + 6, (PlyTemp + (PlyTemp - ply_seams_win(i))) / 2, ptW(0) + ply_width_w + 11, 4 + (PlyTemp + (PlyTemp - ply_seams_win(i))) / 2, " PLYWOOD", pi / 2)
+                        }
+                        else
+                        {
+                            //Call DrawDimSuffix(ptW(0) + ply_width_w, PlyTemp - ply_seams_win(i), ptW(0) + ply_width_w, PlyTemp, ptW(0) + ply_width_w + 6, (PlyTemp + (PlyTemp - ply_seams_win(i))) / 2, " PLYWOOD")
+                        }
+                    }
+                }
+
+                //     Call DrawDimSuffix(ptW(0), ptW(1) + WinPos - WinStudOff, ptW(0), ptW(1) + stud_base_gap, ptW(0) - 4.5, (ptW(1) + WinPos - WinStudOff + ptW(1) + stud_base_gap) / 2, " STUD") 'lower stud
+                //     Call DrawDimSuffix(ptW(0), ptW(1) + WinPos + WinStudOff + WinGap, ptW(0), ptW(1) + z + WinGap, ptW(0) - 4.5, (ptW(1) + z + ptW(1) + WinPos + WinStudOff + 2 * WinGap) / 2, " STUD") 'window stud
+                //     Call DrawDimLinLeader(ptW(0), ptW(1) + WinPos - WinStudOff, ptW(0), ptW(1) + WinPos, ptW(0) - 4.5, (ptW(1) + WinPos - WinStudOff + ptW(1) + WinPos) / 2, ptW(0) - 8.5, ptW(1) + WinPos - 5.5, pi / 2) 'Lower stud offset dimension
+                //     Call DrawDimLinLeader(ptW(0), ptW(1) + WinPos + WinStudOff + WinGap, ptW(0), ptW(1) + WinPos + WinGap, ptW(0) - 4.5, (ptW(1) + WinPos + WinStudOff + ptW(1) + WinPos + 2 * WinGap) / 2, ptW(0) - 8.5, ptW(1) + WinPos + WinGap + 5.5, pi / 2) 'window stud offset dimension
+                //     Call DrawDimSuffix(ptW(0) + ply_width_w, ptW(1) + z + WinGap, ptW(0), ptW(1) + z + WinGap, (2 * ptW(0) + ply_width_w) / 2, ptW(1) + z + 4 + WinGap, " PLYWOOD")
+            }
+
+            if (window)
+            {
+                //     Call DrawDimLin(ptE(0) + chamf_thk, ptE(1) + WinPos, ptE(0) + chamf_thk, ptE(1) + WinPos + win_clamp_top_max, ptE(0) - 4.5, (2 * ptE(1) + 2 * WinPos + win_clamp_top_max) / 2, pi / 2)
+                //     Call DrawDimLin(ptE(0) + chamf_thk, ptE(1) + WinPos, ptE(0) + chamf_thk, ptE(1) + WinPos - win_clamp_bot_max, ptE(0) - 4.5, (2 * ptE(1) + 2 * WinPos - win_clamp_bot_max) / 2, pi / 2)
+            }
+
+            pt13[0] = pt_o[0] + 427 + x - chamf_thk;
+            pt13[1] = pt_o[1] + 42 + ply_thk;
+            pt30[0] = pt13[0] - x;
+            pt30[1] = pt13[1] + y;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES1"),
+                draftingView);
+            pt30[0] = pt13[0];
+            pt30[1] = pt13[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES2"),
+                draftingView);
+            pt30[0] = pt13[0];
+            pt30[1] = pt13[1] + y;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES3"),
+                draftingView);
+            pt30[0] = pt13[0] - x;
+            pt30[1] = pt13[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES4"),
+                draftingView);
+            pt30[0] = pt13[0] - x;
+            pt30[1] = pt13[1] + y + 83.5;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES5"),
+                draftingView);
+            pt30[0] = pt13[0] - (x - 12) / 2;
+            pt30[1] = pt13[1] + y + 83.5;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES6"),
+                draftingView);
+            pt30[0] = pt13[0] - x;
+            pt30[1] = pt13[1] + 83.5;
+
+            if (_ui.Picking.IsChecked == true)
+            {
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES7_LOOP"),
+                    draftingView);
+            }
+            else
+            {
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_PLAN_NOTES7"),
+                    draftingView);
+            }
+
+            pt15[0] = pt13[0];
+            pt15[1] = pt13[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op), draftingView);
+            pt15[0] = pt13[0] - x;
+            pt15[1] = pt13[1] + y;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
+            pt15[0] = pt13[0];
+            pt15[1] = pt13[1] + 83.5;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op), draftingView);
+            //TODO  If window = True Then Call ChangeProp[BlockRefObj, "Angle1", swing_ang] 'Rotate clamp out if window
+            pt15[0] = pt13[0] - x;
+            pt15[1] = pt13[1] + y + 83.5;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
+            pt15[0] = pt13[0] - x;
+            pt15[1] = pt13[1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME), draftingView);
+            pt15[0] = pt13[0];
+            pt15[1] = pt13[1] + y;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME), draftingView);
+            if (_ui.Regular.IsChecked == true)
+            {
+                pt15[0] = pt13[0] - x;
+                pt15[1] = pt13[1] + 83.5;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME_SLINGS),
+                    draftingView);
+                pt15[0] = pt13[0];
+                pt15[1] = pt13[1] + y + 83.5;
+                if (window == false)
+                {
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15),
+                        GetFamilySymbolByName(SQ_NAME_SLINGS),
+                        draftingView);
+                    RotateFamily(family, 180);
+                }
+
+                if (x < 14 || y < 14 || window)
+                {
+                    pt15[0] = pt13[0];
+                    pt15[1] = pt13[1] + 83.5 + y;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15),
+                        GetFamilySymbolByName("VBA_LIFTING_SLING_C"),
+                        draftingView);
+                    pt15[0] = pt13[0] - x;
+                    pt15[1] = pt13[1] + 83.5;
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15),
+                        GetFamilySymbolByName("VBA_LIFTING_SLING_C"),
+                        draftingView);
+                    RotateFamily(family, 180);
+                }
+            }
+            else if (_ui.Picking.IsChecked == true)
+            {
+                pt15[0] = pt13[0] - x;
+                pt15[1] = pt13[1] + 83.5;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15),
+                    GetFamilySymbolByName("VBA_PICKING_CORNER"),
+                    draftingView);
+                pt15[0] = pt13[0];
+                pt15[1] = pt13[1] + y + 83.5;
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15),
+                    GetFamilySymbolByName("VBA_PICKING_CORNER"),
+                    draftingView);
+                RotateFamily(family, 180);
+            }
+
+            if (x >= 14 && y >= 14)
+            {
+                pt15[0] = pt13[0];
+                pt15[1] = pt13[1] + y + 83.5;
+            }
+            else
+            {
+                pt15[0] = pt13[0] + 6;
+                pt15[1] = pt13[1] - 1 + 83.5;
+            }
+
+            if (window == false)
+            {
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName("VBA_PLAN_NOTES8"),
+                    draftingView);
+            }
+
+            pt12[0] = pt13[0] - x + chamf_thk;
+            pt12[1] = pt13[1] - ply_thk;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            pt12[0] = pt12[0] - ply_thk - chamf_thk;
+            pt12[1] = pt12[1] + ply_width_y + ply_thk - chamf_thk - 1.5;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, -90);
+            pt12[0] = pt12[0] + ply_thk - chamf_thk + ply_width_x - 1.5;
+            pt12[1] = pt12[1] + ply_thk + chamf_thk;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, 180);
+            pt12[0] = pt12[0] + ply_thk + chamf_thk;
+            pt12[1] = pt12[1] - ply_thk + chamf_thk - ply_width_y + 1.5;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, 90);
+            pt12[0] = pt12[0] - ply_width_x + 1.5;
+            pt12[1] = pt12[1] + 82;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            pt12[0] = pt12[0] - ply_thk - chamf_thk;
+            pt12[1] = pt12[1] + ply_width_y - 1.5;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, -90);
+            pt12[0] = pt12[0] + ply_width_x - 1.5;
+            pt12[1] = pt12[1] + ply_thk + chamf_thk;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, 180);
+            pt12[0] = pt12[0] + ply_thk + chamf_thk;
+            pt12[1] = pt12[1] - ply_width_y + 1.5;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                draftingView);
+            RotateFamily(family, 90);
+            pt14[1] = pt13[1] - ply_thk - 1.5;
+            for (int j = 0; j < n_studs_x - 1; j++)
+            {
+                pt14[0] = pt13[0] - x + stud_spacing_x[j];
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_spax),
+                    draftingView);
+            }
+
+            pt14[0] = pt13[0] - x + stud_spacing_x[stud_spacing_x.Length - 1];
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                draftingView);
+            pt14[0] = pt13[0] - x - ply_thk - 1.5;
+            for (int j = 0; j < n_studs_y; j++)
+            {
+                pt14[1] = pt13[1] + y - stud_spacing_y[j];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_spax),
+                    draftingView);
+                RotateFamily(family, -90);
+            }
+
+            pt14[1] = pt13[1] + y + ply_thk + 1.5;
+            for (int j = 0; j < n_studs_x; j++)
+            {
+                pt14[0] = pt13[0] - stud_spacing_x[j];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_spax),
+                    draftingView);
+                RotateFamily(family, 90);
+            }
+
+            pt14[0] = pt13[0] + ply_thk + 1.5;
+            for (int j = 1; j < n_studs_y; j++)
+            {
+                pt14[1] = pt13[1] + stud_spacing_y[j];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_spax),
+                    draftingView);
+                RotateFamily(family, 90);
+            }
+
+            pt14[1] = pt13[1] + stud_spacing_x[1];
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                draftingView);
+            RotateFamily(family, 90);
+            pt13[1] = pt13[1] + 83.5;
+            pt14[1] = pt13[1] - ply_thk - 1.5;
+            for (int j = 0; j < n_studs_x; j++)
+            {
+                pt14[0] = pt13[0] - x + stud_spacing_x[j];
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                    draftingView);
+            }
+
+            pt14[0] = pt13[0] - x - ply_thk - 1.5;
+            for (int j = 0; j < n_studs_y; j++)
+            {
+                pt14[1] = pt13[1] + ply_width_y - stud_spacing_y[j] - 1.5;
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                    draftingView);
+                RotateFamily(family, -90);
+            }
+
+            pt14[1] = pt13[1] + y + ply_thk + 1.5;
+            for (int j = 0; j < n_studs_x; j++)
+            {
+                pt14[0] = pt13[0] - stud_spacing_x[j];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                    draftingView);
+                RotateFamily(family, 180);
+            }
+
+            if (window)
+            {
+                stud_block_bolt = stud_block_bolt_hidden;
+            }
+
+            pt14[0] = pt13[0] + ply_thk + 1.5;
+            for (int j = 0; j < n_studs_y; j++)
+            {
+                pt14[1] = pt13[1] + stud_spacing_y[j];
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt14), GetFamilySymbolByName(stud_block_bolt),
+                    draftingView);
+                RotateFamily(family, 90);
+            }
+
+            stud_block_bolt = stud_block_bolt.Replace("_HIDDEN", "");
+            if (window)
+            {
+                for (int j = 0; j < n_studs_y; j++)
+                {
+                    pt5[0] = pt13[0] + ply_thk + 1.5 + 1 + Math.Sin(swing_ang) +
+                             (3.25 + y - stud_spacing_y[j]) * Math.Cos(swing_ang);
+                    pt5[1] = pt13[1] + y + ply_thk + 2.5 - Math.Cos(swing_ang) +
+                             (3.25 + y - stud_spacing_y[j]) * Math.Sin(swing_ang);
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt5), GetFamilySymbolByName(stud_block_bolt),
+                        draftingView);
+                    RotateFamily(family, (swing_ang + Math.PI) * 180 / Math.PI);
+                    pt5[0] = pt13[0] + ply_thk + 1.5 + 1 + 2.5 * Math.Sin(swing_ang) +
+                             (3.25 + y - chamf_thk) * Math.Cos(swing_ang);
+                    pt5[1] = pt13[1] + y + ply_thk + 2.5 - 2.5 * Math.Cos(swing_ang) +
+                             (3.25 + y - chamf_thk) * Math.Sin(swing_ang);
+                    family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt5),
+                        GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
+                        draftingView);
+                    RotateFamily(family, (swing_ang + Math.PI) * 180 / Math.PI);
+                }
+            }
+
+            if (brace_clamp > n_top_clamps)
+            {
+                pt13[1] = pt13[1] - 83.5;
+            }
+
+            if (clamp_L - 12.5 - x >= 8.5)
+            {
+                pt16[0] = pt13[0] - x - 6.25 + clamp_L - 4.25;
+                pt16[1] = pt13[1] + ply_thk + y;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_AFB_PLAN"),
+                    draftingView);
+            }
+            else
+            {
+                if (stud_spacing_x[1] - stud_spacing_x[0] - 3.5 >= min_stud_gap)
+                {
+                    pt16[0] = pt13[0] - stud_spacing_x[0] - 3.5 - (stud_spacing_x[1] - stud_spacing_x[0] - 3.5) / 2;
+                    pt16[1] = pt13[1] + ply_thk + y;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_AFB_PLAN"),
+                        draftingView);
+                }
+                else
+                {
+                    pt16[0] = pt13[0] - x - 6.25 + clamp_L - 2;
+                    pt16[1] = pt13[1] + ply_thk + y;
+                    _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_AFB_PLAN"),
+                        draftingView);
+                }
+            }
+
+            pt16[0] = pt13[0] - x + 3.8125;
+            pt16[1] = pt13[1] + ply_thk + y;
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_AFB_PLAN"),
+                draftingView);
+
+            pt16[0] = pt13[0] - x - ply_thk;
+            pt16[1] = pt13[1] + 3.8125;
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_AFB_PLAN"),
+                draftingView);
+            RotateFamily(family, 90);
+            pt16[0] = pt13[0] - x;
+            pt16[1] = pt13[1];
+            if (y > 27)
+            {
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_PLAN_NOTES9A"),
+                    draftingView);
+            }
+            else
+            {
+                pt16[1] = pt13[1] + y;
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt16), GetFamilySymbolByName("VBA_PLAN_NOTES9B"),
+                    draftingView);
+            }
+
+            if (brace_clamp <= n_top_clamps)
+            {
+                pt13[1] = pt13[1] - 83.5;
+            }
+        }
+
+        private static XYZ GetXYZByPoint(double[] point)
+        {
+            var x = UnitUtils.ConvertToInternalUnits(point[0], DisplayUnitType.DUT_MILLIMETERS);
+            var y = UnitUtils.ConvertToInternalUnits(point[1], DisplayUnitType.DUT_MILLIMETERS);
+            return new XYZ(x, y, 0);
+        }
+
+        public static void RotateFamily(FamilyInstance family, double angle)
+        {
+            _doc.Regenerate();
+            if (family.Location is not LocationPoint lp) return;
+            var p1 = new XYZ(lp.Point.X, lp.Point.Y, 0);
+            var p2 = new XYZ(p1.X, p1.Y, p1.Z + 10);
+            var axis = Line.CreateBound(p1, p2);
+            lp.Rotate(axis, (Math.PI / 180) * (angle));
         }
 
 
@@ -1064,7 +2213,7 @@ namespace ColumnDesign.Methods
             if (vd == null) return null;
             var draftView = ViewDrafting.Create(doc, vd.Id);
             draftView.Name = $"{sheetName}_{DateTime.Now:MM-dd-yyyy-HH-mm-ss}";
-            draftView.Scale = 25;
+            draftView.Scale = 1;
             return draftView;
         }
 

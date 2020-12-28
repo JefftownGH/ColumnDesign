@@ -6,10 +6,12 @@ namespace ColumnDesign.Methods
     /// Class for creating Argument (Wrapped) External Events
     /// </summary>
     /// <typeparam name="TType">The Class type being wrapped for the External Event Handler.</typeparam>
-    public abstract class RevitEventWrapper<TType> : IExternalEventHandler
+    /// <typeparam name="TType2">The Class type being wrapped for the External Event Handler.</typeparam>
+    public abstract class RevitEventWrapper<TType, TType2> : IExternalEventHandler
     {
         private readonly object _lock;
         private TType _savedArgs;
+        private TType2 _savedArgs2;
         private readonly ExternalEvent _revitEvent;
         private DrawingTypes _drawingType;
         /// <summary>
@@ -28,15 +30,17 @@ namespace ColumnDesign.Methods
         public void Execute(UIApplication app)
         {
             TType args;
+            TType2 args2;
             DrawingTypes drawingType;
             lock (_lock)
             {
                 args = _savedArgs;
+                args2 = _savedArgs2;
                 drawingType = _drawingType;
                 _savedArgs = default;
             }
 
-            Execute(app, args, drawingType);
+            Execute(app, args, args2, drawingType);
         }
 
         /// <summary>
@@ -52,12 +56,14 @@ namespace ColumnDesign.Methods
         /// Execute the wrapped external event in a valid Revit API context.
         /// </summary>
         /// <param name="args">Arguments that could be passed to the execution method.</param>
+        /// <param name="args2">Arguments that could be passed to the execution method.</param>
         /// <param name="drawingTypes"></param>
-        public void Raise(TType args, DrawingTypes drawingTypes)
+        public void Raise(TType args, TType2 args2, DrawingTypes drawingTypes)
         {
             lock (_lock)
             {
                 _savedArgs = args;
+                _savedArgs2 = args2;
                 _drawingType = drawingTypes;
             }
 
@@ -68,8 +74,9 @@ namespace ColumnDesign.Methods
         /// Override void which wraps the "Execution" method in a valid Revit API context.
         /// </summary>
         /// <param name="app">Revit UI Application to use as the "wrapper" API context.</param>
-        /// <param name="vm">Arguments that could be passed to the execution method.</param>
+        /// <param name="view">View</param>
+        /// <param name="vm">ViewModel</param>
         /// <param name="drawingType">Type of sheet to create</param>
-        protected abstract void Execute(UIApplication app, TType vm, DrawingTypes drawingType);
+        protected abstract void Execute(UIApplication app, TType view, TType2 vm, DrawingTypes drawingType);
     }
 }

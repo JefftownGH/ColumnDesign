@@ -1,6 +1,7 @@
 ﻿using System;
 using Autodesk.Revit.UI;
 using ColumnDesign.UI;
+using ColumnDesign.ViewModel;
 
 namespace ColumnDesign.Methods
 {
@@ -12,20 +13,20 @@ namespace ColumnDesign.Methods
     /// directly, but can become cumbersome in larger application architectures. At that point, it is suggested
     /// to use more "low-level" wrapping, as with the string-argument-wrapped method above.
     /// </summary>
-    public class EventHandlerWithWpfArg : RevitEventWrapper<ColumnCreatorView>
+    public class EventHandlerWithWpfArg : RevitEventWrapper<ColumnCreatorView, ColumnCreatorViewModel>
     {
         /// <summary>
         /// The Execute override void must be present in all methods wrapped by the RevitEventWrapper.
         /// This defines what the method will do when raised externally.
         /// </summary>
-        protected override void Execute(UIApplication uiApp, ColumnCreatorView ui, DrawingTypes drawingType)
+        protected override void Execute(UIApplication uiApp, ColumnCreatorView ui, ColumnCreatorViewModel vm, DrawingTypes drawingType)
         {
             try
             {
                 switch (drawingType)
                 {
                     case DrawingTypes.Gates:
-                        Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui);
+                        Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui, vm);
                         break;
                     case DrawingTypes.Scissors:
                         Methods.CreateScissors(uiApp.ActiveUIDocument.Document, ui);
@@ -36,7 +37,7 @@ namespace ColumnDesign.Methods
             }
             catch (Exception e)
             {
-                TaskDialog.Show("Error", e.Message + e.StackTrace);
+                TaskDialog.Show("Error", e.Message);
             }
         }
     }

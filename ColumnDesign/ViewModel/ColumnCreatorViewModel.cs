@@ -253,12 +253,12 @@ namespace ColumnDesign.ViewModel
 
         private void DrawGates()
         {
-            _eExternalMethodWpfArg.Raise(_view, DrawingTypes.Gates);
+            _eExternalMethodWpfArg.Raise(_view,  this,DrawingTypes.Gates);
         }
 
         private void DrawScissors()
         {
-            _eExternalMethodWpfArg.Raise(_view, DrawingTypes.Scissors);
+            _eExternalMethodWpfArg.Raise(_view, this,DrawingTypes.Scissors);
         }
 
         private static bool DrawGatesCanExecute => true;
