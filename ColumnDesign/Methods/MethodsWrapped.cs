@@ -26,10 +26,10 @@ namespace ColumnDesign.Methods
                 switch (drawingType)
                 {
                     case DrawingTypes.Gates:
-                        Methods.CreateGates(uiApp.ActiveUIDocument.Document, ui, vm);
+                        Methods.CreateGates(uiApp.ActiveUIDocument, ui, vm);
                         break;
                     case DrawingTypes.Scissors:
-                        Methods.CreateScissors(uiApp.ActiveUIDocument.Document, ui);
+                        Methods.CreateScissors(uiApp.ActiveUIDocument, ui);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(drawingType), drawingType, null);
