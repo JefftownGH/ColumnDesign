@@ -39,7 +39,6 @@ namespace ColumnDesign.Modules
                     i++;
                 }
             }
-
             return returnMatrix;
         }
 
@@ -49,8 +48,11 @@ namespace ColumnDesign.Modules
             var minRows = Math.Min(rows, original.GetLength(0));
             var minCols = Math.Min(cols, original.GetLength(1));
             for (var i = 0; i < minRows; i++)
-            for (var j = 0; j < minCols; j++)
-                newArray[i, j] = original[i, j];
+            {
+                for (var j = 0; j < minCols; j++)
+                    newArray[i, j] = original[i, j];
+            }
+
             return newArray;
         }
     }

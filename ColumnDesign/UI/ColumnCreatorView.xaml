@@ -547,10 +547,10 @@
                         <TextBox x:Name="SPlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
                         <TextBlock>Clamp size</TextBlock>
                         <StackPanel>
-                            <RadioButton>36" Scissor clamp</RadioButton>
-                            <RadioButton>48" Scissor clamp</RadioButton>
-                            <RadioButton>60" Scissor clamp</RadioButton>
-                            <RadioButton IsChecked="True">Choose by column size</RadioButton>
+                            <RadioButton x:Name="Clampsize1">36" Scissor clamp</RadioButton>
+                            <RadioButton x:Name="Clampsize2">48" Scissor clamp</RadioButton>
+                            <RadioButton x:Name="Clampsize3">60" Scissor clamp</RadioButton>
+                            <RadioButton x:Name="ClampSizeChoose" IsChecked="True">Choose by column size</RadioButton>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel DockPanel.Dock="Right">

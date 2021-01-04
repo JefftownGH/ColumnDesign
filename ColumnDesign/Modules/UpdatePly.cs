@@ -76,7 +76,53 @@ namespace ColumnDesign.Modules
                 "Y" => px_y,
                 _ => throw new ArgumentException("Error: Horizontal dimension not x or y")
             };
-            //TODO 
+            //TODO  'Draw "frame" of column: left, right, and top
+            // ColumnCreator.img_line_1.Left = pt_draw(0) - px_width / 2
+            // ColumnCreator.img_line_1.top = pt_draw(1) - px_z_max
+            // ColumnCreator.img_line_1.Width = 2
+            // ColumnCreator.img_line_1.Height = px_z_max
+            // ColumnCreator.img_line_1.Visible = True
+            //
+            // 'Right
+            // ColumnCreator.img_line_2.Left = pt_draw(0) + px_width / 2
+            // ColumnCreator.img_line_2.top = pt_draw(1) - px_z_max
+            // ColumnCreator.img_line_2.Width = 2
+            // ColumnCreator.img_line_2.Height = px_z_max
+            // ColumnCreator.img_line_2.Visible = True
+            //
+            // 'Top
+            // ColumnCreator.img_line_3.Left = pt_draw(0) - px_width / 2
+            // ColumnCreator.img_line_3.top = pt_draw(1) - px_z_max
+            // ColumnCreator.img_line_3.Width = px_width
+            // ColumnCreator.img_line_3.Height = 2
+            // ColumnCreator.img_line_3.Visible = True
+            //
+            // 'Draw plywood seams
+            //     Dim cumulative_z As Double
+            // For i = 1 To UBound(ply_seams) - 1
+            // Coll(i).Left = pt_draw(0) - px_width / 2
+            // cumulative_z = 0
+            // For j = 1 To i
+            //     cumulative_z = cumulative_z + ply_seams(j)
+            // Next j
+            // Coll(i).top = pt_draw(1) - px_z_max * (cumulative_z / z)
+            // Coll(i).Width = px_width
+            // Coll(i).Height = 2
+            // Coll(i).Visible = True
+            // Next i
+            //
+            // 'Dimension plywood seams
+            // For i = 1 To UBound(ply_seams)
+            // Coll(i + 10).Left = pt_draw(0) + px_width / 2 + 10
+            // cumulative_z = 0
+            // For j = 1 To i
+            //     cumulative_z = cumulative_z + ply_seams(j)
+            // Next j
+            // Coll(i + 10).top = pt_draw(1) - px_z_max * ((cumulative_z - ply_seams(i) / 2) / z) - Coll(i + 10).Height / 2 + 2
+            // Coll(i + 10).Caption = ConvertFtIn(ply_seams(i))
+            // Coll(i + 10).Visible = True
+            // Next i
+                
             if (ui.WindowX.IsChecked==true || ui.WindowX.IsChecked ==true )
             {
                 if (vm.WinDim1.Equals("Z1"))
@@ -97,9 +143,7 @@ namespace ColumnDesign.Modules
                 }
             }
         }
-
-        #region MyRegion
-
+        
         //     'Input source of 0 is for changes from the x, y, and z boxes or from changing the axis
 //     'Input source of 1 is for changes from boxPlySeams
 //     'Input source of 2 is for changes from the window checkboxes or the window position dimensions
@@ -153,7 +197,6 @@ namespace ColumnDesign.Modules
 //         
 //         'Create window seam
 
-        #endregion
 //         If ColumnCreator.chkWinX.Value = True Or ColumnCreator.chkWinY.Value = True Then
 //             If InputSource = 0 Or InputSource = 2 Or InputSource = 3 Then
 //                 ColumnCreator.img_line_win.Left = pt_draw(0) - px_width / 2

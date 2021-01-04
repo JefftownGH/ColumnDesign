@@ -175,7 +175,10 @@ namespace ColumnDesign.Modules
 // '   Other useful functions
 // '===============================================================================================================================
 //
-// Public Function sValidatePlySeams(ply_seams() As Double, x As Double, y As Double, z As Double) As Integer
+        public static int sValidatePlySeams(ColumnCreatorView ui, double[] ply_seams, double x, double y,
+            double z)
+        {
+            
 // 'Returns 0: not valid
 // 'Returns 1: valid
 //     
@@ -234,7 +237,8 @@ namespace ColumnDesign.Modules
 // End If
 //
 // sValidatePlySeamsLastLine:
-// End Function
+            return 0;
+        }
 //
 // Public Function sCheckHeight(x As Double, y As Double, z As Double)
 //     
