@@ -1159,7 +1159,15 @@ namespace ColumnDesign.Methods
                 };
                 ptTemp[0] = pt6[0] + 1.5;
                 ptTemp[1] = pt6[1] + (z - stud_base_gap) / 2;
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                switch (stud_face_block)
+                {
+                    case "VBA_2X4_FACE":
+                        TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                        break;
+                    case "VBA_LVL_FACE":
+                        TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                        break;
+                }
             }
 
             if (DrawB)
@@ -1184,7 +1192,15 @@ namespace ColumnDesign.Methods
                     };
                     ptTemp[0] = pt6[0] + 1.5;
                     ptTemp[1] = pt6[1] + (z - stud_base_gap) / 2;
-                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                    switch (stud_face_block)
+                    {
+                        case "VBA_2X4_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                            break;
+                        case "VBA_LVL_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            break;
+                    }
                 }
             }
 
@@ -1210,7 +1226,15 @@ namespace ColumnDesign.Methods
                     };
                     ptTemp[0] = pt6[0] + 1.5;
                     ptTemp[1] = pt6[1] + (WinPos - WinStudOff - stud_base_gap) / 2;
-                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                    switch (stud_face_block)
+                    {
+                        case "VBA_2X4_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                            break;
+                        case "VBA_LVL_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            break;
+                    }
                     pt6[1] = ptW[1] + WinPos + WinStudOff + WinGap;
                     family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
                         draftingView);
@@ -1229,7 +1253,15 @@ namespace ColumnDesign.Methods
                     ptTemp = new double[2];
                     ptTemp[0] = pt6[0] + 1.5;
                     ptTemp[1] = pt6[1] + (z - WinPos - WinStudOff) / 2;
-                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                    switch (stud_face_block)
+                    {
+                        case "VBA_2X4_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                            break;
+                        case "VBA_LVL_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            break;
+                    }
                 }
             }
 
@@ -1493,7 +1525,15 @@ namespace ColumnDesign.Methods
                     };
                     ptTemp[0] = pt20[0] + 1.5;
                     ptTemp[1] = pt20[1] + (z - stud_base_gap) / 2;
-                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                    switch (stud_face_block)
+                    {
+                        case "VBA_2X4_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                            break;
+                        case "VBA_LVL_FACE":
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            break;
+                    }
                 }
             }
             else if (window)
@@ -1522,7 +1562,15 @@ namespace ColumnDesign.Methods
                         };
                         ptTemp[0] = pt20[0] + 1.5;
                         ptTemp[1] = pt20[1] + (WinPos - stud_base_gap - WinStudOff) / 2;
-                        TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                        switch (stud_face_block)
+                        {
+                            case "VBA_2X4_FACE":
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                                break;
+                            case "VBA_LVL_FACE":
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                                break;
+                        }
 
                         pt21[0] = ptE[0] + stud_spacing_e[i];
                         pt21[1] = ptE[1] + WinPos + WinStudOff;
@@ -1545,7 +1593,15 @@ namespace ColumnDesign.Methods
                        ptTemp = new double[2];
                         ptTemp[0] = pt21[0] + 1.5;
                         ptTemp[1] = pt21[1] + (z - WinPos - WinStudOff) / 2;
-                        TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                        switch (stud_face_block)
+                        {
+                            case "VBA_2X4_FACE":
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
+                                break;
+                            case "VBA_LVL_FACE":
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                                break;
+                        }
                     }
                 }
             }
@@ -2104,7 +2160,7 @@ namespace ColumnDesign.Methods
                         UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0); 
                 tempXYZ2 =
                     new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]-ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                        UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0);         
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
                 curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
@@ -2512,8 +2568,11 @@ namespace ColumnDesign.Methods
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
             pt15[0] = pt13[0];
             pt15[1] = pt13[1] + 83.5;
-            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op), draftingView);
-            //TODO  If window = True Then Call ChangeProp[BlockRefObj, "Angle1", swing_ang] 'Rotate clamp out if window
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op), draftingView);
+            if (window)
+            {
+                family.LookupParameter("Angle1")?.Set(swing_ang);
+            }
             pt15[0] = pt13[0] - x;
             pt15[1] = pt13[1] + y + 83.5;
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
@@ -2817,8 +2876,9 @@ namespace ColumnDesign.Methods
             pl_pts[7] = pt13[1] + y;
             pl_pts[8] = pt13[0];
             pl_pts[9] = pt13[1];
-//     
-//     TODO Set OuterLoop(0) = ThisDrawing.ModelSpace.AddLightWeightPolyline(pl_pts) 'Assign the pline object as the hatch's outer loop (inner loop optional and skipped here)
+
+//     TODO Hatching
+// Set OuterLoop(0) = ThisDrawing.ModelSpace.AddLightWeightPolyline(pl_pts) 'Assign the pline object as the hatch's outer loop (inner loop optional and skipped here)
 //     Set hatchObj = ThisDrawing.ModelSpace.AddHatch(0, "AR-CONC", True) 'Set hatch
 //     hatchObj.AppendOuterLoop (OuterLoop)
 //     OuterLoop(0).Delete
@@ -2828,6 +2888,8 @@ namespace ColumnDesign.Methods
             pl_pts[5] = pl_pts[5] + 83.5;
             pl_pts[7] = pl_pts[7] + 83.5;
             pl_pts[9] = pl_pts[9] + 83.5;
+            
+            //     TODO Hatching
 //     Set OuterLoop(0) = ThisDrawing.ModelSpace.AddLightWeightPolyline(pl_pts)
 //     Set hatchObj = ThisDrawing.ModelSpace.AddHatch(0, "AR-CONC", True)
 //     hatchObj.AppendOuterLoop (OuterLoop)
@@ -2964,16 +3026,64 @@ namespace ColumnDesign.Methods
                 TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  $"{y}", textNoteOptions);
             }
 
+
+            
             if (z > 190)
             {
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_o), GetFamilySymbolByName("VBA_COLUMN_BACKGROUND_HIGH"),
                     draftingView);
+               var imageX = UnitUtils.ConvertToInternalUnits(385, DisplayUnitType.DUT_MILLIMETERS);
+               var imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
+               var imageOption = new ImageImportOptions
+                {
+                    RefPoint = new XYZ(imageX,imageY,0),
+                    Resolution = 300,
+                    Placement = BoxPlacement.Center
+                };
+                _doc.Import($"{GlobalNames.WtFileLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView, out var image);
+                image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
+                    .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
+                
+                imageX = UnitUtils.ConvertToInternalUnits(435, DisplayUnitType.DUT_MILLIMETERS);
+               imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
+               imageOption = new ImageImportOptions
+                {
+                    RefPoint = new XYZ(imageX,imageY,0),
+                    Resolution = 300,
+                    Placement = BoxPlacement.Center
+                };
+                _doc.Import($"{GlobalNames.WtFileLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
+                image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
+                    .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
             }
             else
             {
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_o),
                     GetFamilySymbolByName("VBA_COLUMN_BACKGROUND_MEDIUM"),
                     draftingView);
+                var imageX = UnitUtils.ConvertToInternalUnits(385, DisplayUnitType.DUT_MILLIMETERS);
+                var imageY = UnitUtils.ConvertToInternalUnits(310, DisplayUnitType.DUT_MILLIMETERS);
+                var imageOption = new ImageImportOptions
+                {
+                    RefPoint = new XYZ(imageX,imageY,0),
+                    Resolution = 300,
+                    Placement = BoxPlacement.Center
+                };
+                _doc.Import($"{GlobalNames.WtFileLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView, out var image);
+                image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
+                    .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
+                
+                imageX = UnitUtils.ConvertToInternalUnits(435, DisplayUnitType.DUT_MILLIMETERS);
+                imageY = UnitUtils.ConvertToInternalUnits(310, DisplayUnitType.DUT_MILLIMETERS);
+                imageOption = new ImageImportOptions
+                {
+                    RefPoint = new XYZ(imageX,imageY,0),
+                    Resolution = 300,
+                    Placement = BoxPlacement.Center
+                };
+                _doc.Import($"{GlobalNames.WtFileLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
+                image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
+                    .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
             }
 
             if (window == false)
@@ -2987,73 +3097,156 @@ namespace ColumnDesign.Methods
 
             pt_blk[0] = ptA[0] + ply_width_x / 2;
             pt_blk[1]= pt_o[1] + 9;
-//     Set BlockRefObj = ThisDrawing.ModelSpace.InsertBlock(pt_blk, "VBA_DETAIL_REF", 0.75, 0.75, 0.75, 0)
-//     AttList = BlockRefObj.GetAttributes
-//     For i = LBound(AttList) To UBound(AttList) 'Assign attribute values
-//         If AttList(i).TextString = "X" Then
-//             AttList(i).TextString = "A"
-//         End If
-//         If AttList(i).TextString = "DESCRIPTION" Then
-//             AttList(i).TextString = "SIDE ""A"" PANEL"
-//         End If
-//         If AttList(i).TextString = "REFERENCE" Then
-//             AttList(i).TextString = "VIEWED FROM PLYWOOD FACE"
-//         End If
-//     Next i
-//     
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
+            ptTemp[0] =  pt_blk[0]-20.5;
+            ptTemp[1] =   pt_blk[1];
+            textNoteOptions   = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Middle,
+                HorizontalAlignment = HorizontalTextAlignment.Center,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "4.5 mm").Id
+            };
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "A", textNoteOptions);
+            ptTemp[0] =  pt_blk[0]+6;
+            ptTemp[1] =   pt_blk[1]+2;
+            textNoteOptions   = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Middle,
+                HorizontalAlignment = HorizontalTextAlignment.Center,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "3.0 mm").Id
+            };
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE \"A\" PANEL", textNoteOptions);
+            ptTemp[0] =  pt_blk[0]+6;
+            ptTemp[1] =   pt_blk[1]-2;
+            textNoteOptions   = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Middle,
+                HorizontalAlignment = HorizontalTextAlignment.Center,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "2.25 mm").Id
+            };
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
             if (DrawB)
             {
                 pt_blk[0]= ptB[0] + ply_width_y / 2;
                 pt_blk[1] = pt_o[1] + 9;
-//         Set BlockRefObj = ThisDrawing.ModelSpace.InsertBlock(pt_blk, "VBA_DETAIL_REF", 0.75, 0.75, 0.75, 0)
-//         AttList = BlockRefObj.GetAttributes
-//         For i = LBound(AttList) To UBound(AttList) 'Assign attribute values
-//             If AttList(i).TextString = "X" Then
-//                 AttList(i).TextString = "B"
-//             End If
-//             If AttList(i).TextString = "DESCRIPTION" Then
-//                 AttList(i).TextString = "SIDE ""B"" PANEL"
-//             End If
-//             If AttList(i).TextString = "REFERENCE" Then
-//                 AttList(i).TextString = "VIEWED FROM PLYWOOD FACE"
-//             End If
-//         Next i
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
+                ptTemp[0] =  pt_blk[0]-20.5;
+                ptTemp[1] =   pt_blk[1];
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "4.5 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "B", textNoteOptions);
+                ptTemp[0] =  pt_blk[0]+6;
+                ptTemp[1] =   pt_blk[1]+2;
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "3.0 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE \"B\" PANEL", textNoteOptions);
+                ptTemp[0] =  pt_blk[0]+6;
+                ptTemp[1] =   pt_blk[1]-2;
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "2.25 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
             }
-//
             if (DrawW)
             {
                 pt_blk[0] = ptW[0] + ply_width_w / 2;
                 pt_blk[1] = pt_o[1] + 9;
-//         Set BlockRefObj = ThisDrawing.ModelSpace.InsertBlock(pt_blk, "VBA_DETAIL_REF", 0.75, 0.75, 0.75, 0)
-//         AttList = BlockRefObj.GetAttributes
-//         For i = LBound(AttList) To UBound(AttList) 'Assign attribute values
-//             If AttList(i).TextString = "X" Then
-//                 AttList(i).TextString = "W"
-//             End If
-//             If AttList(i).TextString = "DESCRIPTION" Then
-//                 AttList(i).TextString = "POUR WINDOW PANEL"
-//             End If
-//             If AttList(i).TextString = "REFERENCE" Then
-//                 AttList(i).TextString = "VIEWED FROM PLYWOOD FACE"
-//             End If
-//         Next i
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
+                ptTemp[0] =  pt_blk[0]-20.5;
+                ptTemp[1] =   pt_blk[1];
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "4.5 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "W", textNoteOptions);
+                ptTemp[0] =  pt_blk[0]+6;
+                ptTemp[1] =   pt_blk[1]+2;
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "3.0 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "POUR WINDOW PANEL", textNoteOptions);
+                ptTemp[0] =  pt_blk[0]+6;
+                ptTemp[1] =   pt_blk[1]-2;
+                textNoteOptions   = new TextNoteOptions
+                {
+                    VerticalAlignment = VerticalTextAlignment.Middle,
+                    HorizontalAlignment = HorizontalTextAlignment.Center,
+                    TypeId = new FilteredElementCollector(_doc)
+                        .OfClass(typeof(TextNoteType))
+                        .Cast<TextNoteType>()
+                        .First(q => q.Name == "2.25 mm").Id
+                };
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
             }
 
             pt_blk[0] = ptE[0] + ply_width_e / 2;
             pt_blk[1] = pt_o[1] + 9;
-//     Set BlockRefObj = ThisDrawing.ModelSpace.InsertBlock(pt_blk, "VBA_DETAIL_REF", 0.75, 0.75, 0.75, 0)
-//     AttList = BlockRefObj.GetAttributes
-//     For i = LBound(AttList) To UBound(AttList) 'Assign attribute values
-//         If AttList(i).TextString = "X" Then
-//             AttList(i).TextString = "E"
-//         End If
-//         If AttList(i).TextString = "DESCRIPTION" Then
-//             AttList(i).TextString = "COLUMN FORM ELEVATION"
-//         End If
-//         If AttList(i).TextString = "REFERENCE" Then
-//             AttList(i).TextString = ""
-//         End If
-//     Next i
+            _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
+            ptTemp[0] =  pt_blk[0]-20.5;
+            ptTemp[1] =   pt_blk[1];
+            textNoteOptions   = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Middle,
+                HorizontalAlignment = HorizontalTextAlignment.Center,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "4.5 mm").Id
+            };
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "E", textNoteOptions);
+            ptTemp[0] =  pt_blk[0]+6;
+            ptTemp[1] =   pt_blk[1]+2;
+            textNoteOptions   = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Middle,
+                HorizontalAlignment = HorizontalTextAlignment.Center,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "3.0 mm").Id
+            };
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "COLUMN FORM ELEVATION", textNoteOptions);
+
             var count_str = $"FAB {n_col}-EA";
             pt32[0] = ptE[0] + ply_width_e / 2;
             pt32[1] = pt_o[1] + 7;
@@ -3064,7 +3257,7 @@ namespace ColumnDesign.Methods
                 TypeId = new FilteredElementCollector(_doc)
                     .OfClass(typeof(TextNoteType))
                     .Cast<TextNoteType>()
-                    .First(q => q.Name == "2.5 mm").Id
+                    .First(q => q.Name == "2.25 mm").Id
             };
             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt32), UnitUtils.ConvertToInternalUnits(30, DisplayUnitType.DUT_MILLIMETERS), count_str, textNoteOptions);
         }
