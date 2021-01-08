@@ -16,10 +16,12 @@ namespace ColumnDesign.UI
     {
         private readonly Document _doc;
         private readonly UIDocument _uiDoc;
+        private readonly UIApplication _uiApp;
         private readonly ColumnCreatorViewModel _vm;
 
         public ColumnCreatorView(UIApplication uiApp, EventHandlerWithWpfArg eExternalMethodWpfArg)
         {
+            _uiApp = uiApp;
             _uiDoc = uiApp.ActiveUIDocument;
             _doc = _uiDoc.Document;
             _vm = new ColumnCreatorViewModel(eExternalMethodWpfArg, this);

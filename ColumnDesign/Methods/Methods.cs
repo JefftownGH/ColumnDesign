@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Documents;
 using Autodesk.Revit.DB;
@@ -3506,6 +3508,16 @@ namespace ColumnDesign.Methods
             catch (Exception e)
             {
                 TaskDialog.Show("Message", "Wait for the families to be loaded into the project");
+                var docHasFamily =
+                    Application.RApplication.Application.OpenDocumentFile(
+                        $"{GlobalNames.WtFamiliesLocationPrefix}BasicProject.rvt");
+                var textTypesProject = new FilteredElementCollector(docHasFamily).OfClass(typeof(TextNoteType));
+                foreach (var wtcur in textTypesProject)
+                {
+                    ICollection<ElementId> copyIds = new Collection<ElementId>() { wtcur.Id };
+                    CopyPasteOptions option = new CopyPasteOptions();
+                    ElementTransformUtils.CopyElements(docHasFamily, copyIds, doc, Transform.Identity, option);
+                }
                 var familyList = new List<string>()
                 {
                     "TitleBlock.rfa",

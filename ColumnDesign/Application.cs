@@ -10,6 +10,7 @@ namespace ColumnDesign
     public class Application : IExternalApplication
     {
         public static Application ThisApp;
+        public static UIApplication RApplication;
 
         private ColumnCreatorView _form;
         public Result OnStartup(UIControlledApplication application)
@@ -38,6 +39,7 @@ namespace ColumnDesign
         {
             if (_form != null && _form == null) return;
             var evWpf = new EventHandlerWithWpfArg();
+            RApplication = uiApp;
             _form = new ColumnCreatorView(uiApp, evWpf);
             _form.Show();
         }
