@@ -625,16 +625,85 @@
                                 Content="Load" />
                         </Grid>
                     </StackPanel>
-                    <StackPanel>
-                        <StackPanel>
-                            <Rectangle
-                                Fill="Transparent"
-                                Stroke="Black"
-                                Height="300"
-                                Margin="20" />
-                            <TextBox>8-0</TextBox>
-                        </StackPanel>
-                    </StackPanel>
+                    <DockPanel LastChildFill="True">
+
+                        <TextBox 
+                            x:Name="SBoxPlySeams" 
+                                 DockPanel.Dock="Bottom" 
+                            Text="{Binding SBoxPlySeams }"
+                            TextChanged="SBoxPlySeams_OnTextChanged"/>
+                        <TextBlock
+                            DockPanel.Dock="Bottom"
+                            x:Name="STxtPlyError"
+                            Visibility="Collapsed"
+                            Text="Error" HorizontalAlignment="Left"
+                            Foreground="Red" />
+                        <Grid
+                            x:Name="SGridAxis"
+                            DockPanel.Dock="Bottom"
+                            Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="40" />
+                                <RowDefinition Height="1" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1" />
+                                <ColumnDefinition Width="40" />
+                            </Grid.ColumnDefinitions>
+                            <Line Grid.Column="0" Grid.Row="0" Stretch="Fill" Y2="1" Stroke="Black" />
+                            <Line Grid.Column="1" Grid.Row="1" Stretch="Fill" X2="1" Stroke="Black" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                VerticalAlignment="Top"
+                                Margin="2"
+                                Text="Z" />
+                            <TextBlock
+                                x:Name="SSlblAxis"
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                VerticalAlignment="Bottom"
+                                HorizontalAlignment="Right"
+                                Margin="2"
+                                Text="Y" />
+                        </Grid>
+                        <DockPanel
+                            x:Name="SPlyLinesPanel"
+                            Margin="10"
+                            LastChildFill="True">
+                            <DockPanel.Style>
+                                <Style TargetType="DockPanel">
+                                    <Setter Property="Visibility" Value="Hidden" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError), ElementName=SWidthX}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=SLengthY}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=SHeightZ}"
+                                                            Value="False" />
+                                                <Condition
+                                                            Binding="{Binding Path=(Validation.HasError),  ElementName=SQuantity}"
+                                                            Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DockPanel.Style>
+ 
+                            <Grid>
+                                <Rectangle
+                                    Fill="Transparent"
+                                    Stroke="Black" />
+                            </Grid>
+                        </DockPanel>
+                    </DockPanel>
+
                 </DockPanel>
             </TabItem.Content>
         </TabItem>

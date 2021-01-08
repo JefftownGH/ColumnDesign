@@ -62,5 +62,10 @@ namespace ColumnDesign.UI
         {
             UpdatePly_Function.UpdatePly(this, _vm);
         }
+
+        private void SBoxPlySeams_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            sUpdatePly_Function.sUpdatePly(this, _vm);
+        }
     }
 }

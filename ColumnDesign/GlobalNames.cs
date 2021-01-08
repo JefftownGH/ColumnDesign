@@ -1,8 +1,12 @@
-﻿namespace ColumnDesign
+﻿using System.IO;
+using System.Reflection;
+using System.Reflection.Emit;
+
+namespace ColumnDesign
 {
     public static class GlobalNames
     {
-        public const string WtFileLocationPrefix = @"D:\Rider projects\ColumnDesign\ColumnDesign\Source\";
-        public const string WtTitleBlockFamilyName = "TitleBlock";
+        public static readonly string WtFilesLocationPrefix = @$"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\Source\";
+        public static readonly string WtFamiliesLocationPrefix = @$"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\Families\";
     }
 }

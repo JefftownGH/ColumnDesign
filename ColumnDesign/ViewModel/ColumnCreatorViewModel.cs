@@ -10,6 +10,7 @@ using ColumnDesign.Annotations;
 using ColumnDesign.Methods;
 using ColumnDesign.UI;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.sUpdatePly_Function;
 using static ColumnDesign.Modules.UpdatePly_Function;
 
 namespace ColumnDesign.ViewModel
@@ -39,6 +40,8 @@ namespace ColumnDesign.ViewModel
         private string _winDim2;
         private string _winDim1;
         private string _boxPlySeams;
+        private string _sBoxPlySeams;
+        private string _sPlywoodType;
 
         public string WidthX
         {
@@ -60,8 +63,12 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _sWidthX = value;
+                _sBoxPlySeams = "";
+                sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
+                OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SWidthX));
                 OnPropertyChanged(nameof(SSheetName));
+                sUpdatePly(_view, this);
             }
         }
 
@@ -85,8 +92,12 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _sLengthY = value;
+                _sBoxPlySeams = "";
+                sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
+                OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SLengthY));
                 OnPropertyChanged(nameof(SSheetName));
+                sUpdatePly(_view, this);
             }
         }
 
@@ -109,7 +120,11 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _sHeightZ = value;
+                _sBoxPlySeams = "";
+                sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
+                OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SHeightZ));
+                sUpdatePly(_view, this);
             }
         }
 
@@ -133,7 +148,11 @@ namespace ColumnDesign.ViewModel
             set
             {
                 _sQuantity = value;
+                _sBoxPlySeams = "";
+                sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
+                OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SQuantity));
+                sUpdatePly(_view, this);
             }
         }
 
@@ -144,6 +163,16 @@ namespace ColumnDesign.ViewModel
             {
                 _plywoodType = value;
                 OnPropertyChanged(nameof(PlywoodType));
+            }
+        }
+
+        public string SPlywoodType
+        {
+            get => _sPlywoodType;
+            set
+            {
+                _sPlywoodType = value;
+                OnPropertyChanged(nameof(SPlywoodType));
             }
         }
 
@@ -194,6 +223,7 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(SDate));
             }
         }
+
         public string SlblAxis
         {
             get => _slblAxis;
@@ -235,6 +265,17 @@ namespace ColumnDesign.ViewModel
             }
         }
 
+        public string SBoxPlySeams
+        {
+            get => _sBoxPlySeams;
+            set
+            {
+                _sBoxPlySeams = value;
+                OnPropertyChanged(nameof(SBoxPlySeams));
+                sUpdatePly(_view, this);
+            }
+        }
+
         public ColumnCreatorViewModel(EventHandlerWithWpfArg eExternalMethodWpfArg, ColumnCreatorView view)
         {
             _eExternalMethodWpfArg = eExternalMethodWpfArg;
@@ -253,12 +294,12 @@ namespace ColumnDesign.ViewModel
 
         private void DrawGates()
         {
-            _eExternalMethodWpfArg.Raise(_view,  this,DrawingTypes.Gates);
+            _eExternalMethodWpfArg.Raise(_view, this, DrawingTypes.Gates);
         }
 
         private void DrawScissors()
         {
-            _eExternalMethodWpfArg.Raise(_view, this,DrawingTypes.Scissors);
+            _eExternalMethodWpfArg.Raise(_view, this, DrawingTypes.Scissors);
         }
 
         private static bool DrawGatesCanExecute => true;

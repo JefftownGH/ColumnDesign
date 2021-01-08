@@ -18,7 +18,7 @@ namespace ColumnDesign.Modules
             var x = ConvertToNum(vm.WidthX);
             var y = ConvertToNum(vm.LengthY);
             var z = ConvertToNum(vm.HeightZ);
-
+            if (x == 0 || y == 0 || z == 0) return;
             double[] ply_seams = { };
 
             vm.WinDim1 = ConvertFtIn(z / 5);
@@ -61,7 +61,7 @@ namespace ColumnDesign.Modules
             }
 
             ui.BoxPlySeams.Text = strPlySeams;
-            
+
             SkipPlyUpdate:
             double[] pt_draw = new double[3];
             pt_draw[0] = 200;
@@ -122,8 +122,8 @@ namespace ColumnDesign.Modules
             // Coll(i + 10).Caption = ConvertFtIn(ply_seams(i))
             // Coll(i + 10).Visible = True
             // Next i
-                
-            if (ui.WindowX.IsChecked==true || ui.WindowX.IsChecked ==true )
+
+            if (ui.WindowX.IsChecked == true || ui.WindowX.IsChecked == true)
             {
                 if (vm.WinDim1.Equals("Z1"))
                 {
@@ -143,7 +143,7 @@ namespace ColumnDesign.Modules
                 }
             }
         }
-        
+
         //     'Input source of 0 is for changes from the x, y, and z boxes or from changing the axis
 //     'Input source of 1 is for changes from boxPlySeams
 //     'Input source of 2 is for changes from the window checkboxes or the window position dimensions

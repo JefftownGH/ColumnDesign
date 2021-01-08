@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Documents;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ColumnDesign.Modules;
@@ -15,7 +17,6 @@ namespace ColumnDesign.Methods
 {
     public static class Methods
     {
-
         private static ColumnCreatorView _ui;
         private static ColumnCreatorViewModel _vm;
         private static Document _doc;
@@ -36,14 +37,13 @@ namespace ColumnDesign.Methods
             const DrawingTypes type = DrawingTypes.Gates;
             using var tr = new Transaction(_doc, $"Create new {type.ToString().ToLower()} sheet");
             tr.Start();
+            LoadFamilies(_doc);
             var sheet = CreateSheet(_doc, ui, DrawingTypes.Gates);
             var draftingView = CreateDraftingView(_doc, sheet.Name);
             CreateClamps(draftingView);
-            var draftingLocation = CalculateDraftingLocation(draftingView, sheet);
-            var vp = Viewport.Create(_doc, sheet.Id, draftingView.Id, draftingLocation);
+            var vp = Viewport.Create(_doc, sheet.Id, draftingView.Id, XYZ.Zero);
+            vp.SetBoxCenter(CalculateDraftingLocation(draftingView, sheet, ui));
             tr.Commit();
-            // uiDoc.ShowElements(sheet.Id);
-            // uiDoc.RefreshActiveView();
         }
 
         public static void CreateScissors(UIDocument uiDoc, ColumnCreatorView ui)
@@ -54,8 +54,12 @@ namespace ColumnDesign.Methods
             const DrawingTypes type = DrawingTypes.Scissors;
             using var tr = new Transaction(_doc, $"Create new {type.ToString().ToLower()} sheet");
             tr.Start();
+            LoadFamilies(_doc);
             var sheet = CreateSheet(_doc, ui, DrawingTypes.Scissors);
-            var dv = CreateDraftingView(_doc, sheet.Name);
+            var draftingView = CreateDraftingView(_doc, sheet.Name);
+            zScissorClampModule.CreateScissorClamp(_ui, _uiDoc, draftingView);
+            var vp = Viewport.Create(_doc, sheet.Id, draftingView.Id, XYZ.Zero);
+            vp.SetBoxCenter(CalculateDraftingLocation(draftingView, sheet, ui));
             tr.Commit();
         }
 
@@ -210,7 +214,7 @@ namespace ColumnDesign.Methods
             int col_num_x = 0;
             int col_num_y = 0;
             int n_studs_total;
-            stud_matrix = ImportMatrix(@$"{GlobalNames.WtFileLocationPrefix}Columns\n_stud_matrix.csv");
+            stud_matrix = ImportMatrix(@$"{GlobalNames.WtFilesLocationPrefix}Columns\n_stud_matrix.csv");
             for (var i = 0; i < stud_matrix.GetLength(0); i++)
             {
                 if (stud_matrix[i, 0] > z)
@@ -440,7 +444,7 @@ namespace ColumnDesign.Methods
                     ply_seams_win[i + 1] = ply_seams[i] - ply_seams_win[i];
                     if (i < ply_seams.Length - 1)
                     {
-                        for (var j = 0; j < ply_seams.Length; j++)
+                        for (var j = i + 1; j < ply_seams.Length; j++)
                         {
                             ply_seams_win[j + 1] = ply_seams[j];
                         }
@@ -549,14 +553,14 @@ namespace ColumnDesign.Methods
                                               (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
                             break;
                         }
-                        else if (l == ply_cuts.GetLength(1)-1)
+                        else if (l == ply_cuts.GetLength(1) - 1)
                         {
                             unique_plys++;
                             ply_cuts = ResizeArray<double>(ply_cuts, 3, unique_plys);
-                            ply_cuts[0, unique_plys-1] = ply_widths[j];
-                            ply_cuts[1, unique_plys-1] = ply_seams[i];
-                            ply_cuts[2, unique_plys-1] = 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
-                                                       (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
+                            ply_cuts[0, unique_plys - 1] = ply_widths[j];
+                            ply_cuts[1, unique_plys - 1] = ply_seams[i];
+                            ply_cuts[2, unique_plys - 1] = 2 - (WinX == true ? 1 : 0) * (j == 0 ? 1 : 0) -
+                                                           (WinY == true ? 1 : 0) * (j == 1 ? 1 : 0);
                             break;
                         }
                     }
@@ -663,7 +667,7 @@ namespace ColumnDesign.Methods
                 swing_ang = -Math.PI / 4;
             }
 
-            var clamp_matrix = ImportMatrix(@$"{GlobalNames.WtFileLocationPrefix}Columns\clamp_matrix.csv");
+            var clamp_matrix = ImportMatrix(@$"{GlobalNames.WtFilesLocationPrefix}Columns\clamp_matrix.csv");
             long_side = x <= y ? y : x;
 
             row_num = 0;
@@ -676,17 +680,17 @@ namespace ColumnDesign.Methods
                 }
             }
 
-            Array.Resize(ref clamp_spacing, clamp_matrix.GetLength(1)-1);
+            Array.Resize(ref clamp_spacing, clamp_matrix.GetLength(1) - 1);
             var k = 0;
             for (var i = 0; i < clamp_matrix.GetLength(1); i++)
             {
-                if (clamp_matrix[row_num, i+1] == 0)
+                if (clamp_matrix[row_num, i + 1] == 0)
                 {
                     Array.Resize(ref clamp_spacing, k - 1);
                     break;
                 }
 
-                clamp_spacing[i] = clamp_matrix[row_num, i+1];
+                clamp_spacing[i] = clamp_matrix[row_num, i + 1];
                 k++;
             }
 
@@ -711,7 +715,7 @@ namespace ColumnDesign.Methods
             clamp_spacing[clamp_spacing.Length - 2] -= tot_temp - (int) z;
             TestClampSpacing:
             var infExit = 0;
-            for (var i = 0; i < clamp_spacing.Length; i++)
+            for (var i = 1; i < clamp_spacing.Length; i++)
             {
                 if (clamp_spacing[i] < 8)
                 {
@@ -887,7 +891,7 @@ namespace ColumnDesign.Methods
             while (clamp_spacing_con[n] > z * 0.7)
             {
                 n++;
-            } 
+            }
 
             int brace_clamp;
             if (Math.Abs(clamp_spacing_con[n] - z * 0.7) < Math.Abs(clamp_spacing_con[n - 1] - z * 0.7))
@@ -902,13 +906,14 @@ namespace ColumnDesign.Methods
             while (clamp_spacing_con[brace_clamp] + 0.9289 < brace_L_stored + 4)
             {
                 brace_clamp--;
-            } 
+            }
 
             int chain_clamp = 0;
             while (clamp_spacing_con[chain_clamp] > clamp_spacing_con[brace_clamp] + 0.9289 - brace_L_stored + 1)
             {
                 chain_clamp++;
-            } 
+            }
+
             col_wt = CalcWeightFunction.wt_total(x, y, z, n_studs_x, n_studs_y, stud_type, n_clamps, clamp_size,
                 brace_size);
             if (col_wt <= max_wt_single_top)
@@ -959,25 +964,26 @@ namespace ColumnDesign.Methods
                        $"• PLYWOOD = 3/4'' PLYFORM (\"{ply_name}\"), CLASS-1 (MIN)\n\n" +
                        "• COLUMN FORMS AND CLAMP SPACING LAYOUTS FOR L4 X 3 X 1/4 GATES LOK-FAST COLUMN CLAMPS ARE DESIGNED FOR A POUR RATE = FULL LIQUID HEAD U.N.O.\n\n" +
                        "• CONTACT THE MCC ENGINEER PRIOR TO ANY CHANGES OR MODIFICATIONS TO THE DETAILS ON THIS SHEET.";
-             var textNoteOptions = new TextNoteOptions
-             {
-                 VerticalAlignment = VerticalTextAlignment.Top,
-                 HorizontalAlignment = HorizontalTextAlignment.Left,
-                 TypeId = new FilteredElementCollector(_doc)
-                     .OfClass(typeof(TextNoteType))
-                     .Cast<TextNoteType>()
-                     .First(q => q.Name == "2.0 mm").Id
-             };
+            var textNoteOptions = new TextNoteOptions
+            {
+                VerticalAlignment = VerticalTextAlignment.Top,
+                HorizontalAlignment = HorizontalTextAlignment.Left,
+                TypeId = new FilteredElementCollector(_doc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .First(q => q.Name == "2.0 mm").Id
+            };
             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt1),
                 UnitUtils.ConvertToInternalUnits(100, DisplayUnitType.DUT_MILLIMETERS), text, textNoteOptions);
-            
+
             for (int i = 0; i < ply_cuts.GetLength(1); i++)
             {
                 qty_text +=
                     $"• ({ply_cuts[2, i] * n_col}-EA) = ({n_col}-COL) X ({ply_cuts[2, i]}-EA/COL) @ {ConvertFtIn(ply_cuts[0, i])} WIDE X {ConvertFtIn(ply_cuts[1, i])} LONG 3/4'' PLYWOOD\n";
             }
+
             qty_text = $"PLYWOOD\n{qty_text}\n";
-            
+
             if (window == false)
             {
                 qty_text +=
@@ -1046,7 +1052,8 @@ namespace ColumnDesign.Methods
                             $"•   ({n_col * 2}-EA) = ({n_col}-COL) X (2EA/COL) ENDLESS ROUND SLINGS; LIFTEX P/N ''ENR2'', GREEN.\n" +
                             "SWL = 4800-LBS. PER SLING IN CHOKER CONFIGURATION.";
             }
-            textNoteOptions   = new TextNoteOptions
+
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Top,
                 HorizontalAlignment = HorizontalTextAlignment.Left,
@@ -1055,7 +1062,8 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "2.0 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt3),UnitUtils.ConvertToInternalUnits(100, DisplayUnitType.DUT_MILLIMETERS) , qty_text, textNoteOptions);
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt3),
+                UnitUtils.ConvertToInternalUnits(100, DisplayUnitType.DUT_MILLIMETERS), qty_text, textNoteOptions);
 
             // #####################################################################################
             //                                   D R A W I N G
@@ -1146,12 +1154,13 @@ namespace ColumnDesign.Methods
                 family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
                     draftingView);
                 RotateFamily(family, 90);
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
-                textNoteOptions   = new TextNoteOptions
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
-                    Rotation = Math.PI/2,
+                    Rotation = Math.PI / 2,
                     TypeId = new FilteredElementCollector(_doc)
                         .OfClass(typeof(TextNoteType))
                         .Cast<TextNoteType>()
@@ -1179,12 +1188,13 @@ namespace ColumnDesign.Methods
                     family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
                         draftingView);
                     RotateFamily(family, 90);
-                    family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
-                    textNoteOptions   = new TextNoteOptions
+                    family.LookupParameter("Distance1")
+                        ?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Middle,
                         HorizontalAlignment = HorizontalTextAlignment.Center,
-                        Rotation = Math.PI/2,
+                        Rotation = Math.PI / 2,
                         TypeId = new FilteredElementCollector(_doc)
                             .OfClass(typeof(TextNoteType))
                             .Cast<TextNoteType>()
@@ -1198,7 +1208,8 @@ namespace ColumnDesign.Methods
                             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                             break;
                         case "VBA_LVL_FACE":
-                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                textNoteOptions);
                             break;
                     }
                 }
@@ -1213,12 +1224,14 @@ namespace ColumnDesign.Methods
                     family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
                         draftingView);
                     RotateFamily(family, 90);
-                    family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(WinPos - WinStudOff - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
-                    textNoteOptions   = new TextNoteOptions
+                    family.LookupParameter("Distance1")
+                        ?.Set(UnitUtils.ConvertToInternalUnits(WinPos - WinStudOff - stud_base_gap,
+                            DisplayUnitType.DUT_MILLIMETERS));
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Middle,
                         HorizontalAlignment = HorizontalTextAlignment.Center,
-                        Rotation = Math.PI/2,
+                        Rotation = Math.PI / 2,
                         TypeId = new FilteredElementCollector(_doc)
                             .OfClass(typeof(TextNoteType))
                             .Cast<TextNoteType>()
@@ -1232,19 +1245,23 @@ namespace ColumnDesign.Methods
                             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                             break;
                         case "VBA_LVL_FACE":
-                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                textNoteOptions);
                             break;
                     }
+
                     pt6[1] = ptW[1] + WinPos + WinStudOff + WinGap;
                     family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt6), GetFamilySymbolByName(stud_face_block),
                         draftingView);
                     RotateFamily(family, 90);
-                    family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(z - WinPos - WinStudOff, DisplayUnitType.DUT_MILLIMETERS));
-                    textNoteOptions   = new TextNoteOptions
+                    family.LookupParameter("Distance1")
+                        ?.Set(UnitUtils.ConvertToInternalUnits(z - WinPos - WinStudOff,
+                            DisplayUnitType.DUT_MILLIMETERS));
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Middle,
                         HorizontalAlignment = HorizontalTextAlignment.Center,
-                        Rotation = Math.PI/2,
+                        Rotation = Math.PI / 2,
                         TypeId = new FilteredElementCollector(_doc)
                             .OfClass(typeof(TextNoteType))
                             .Cast<TextNoteType>()
@@ -1259,7 +1276,8 @@ namespace ColumnDesign.Methods
                             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                             break;
                         case "VBA_LVL_FACE":
-                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                textNoteOptions);
                             break;
                     }
                 }
@@ -1269,7 +1287,7 @@ namespace ColumnDesign.Methods
             foreach (var t in ply_seams)
             {
                 pt4[0] = ptA[0];
-                pt4[1] = pt4[1] + t;
+                pt4[1] += t;
                 family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt4), GetFamilySymbolByName("VBA_PLY_SHEET"),
                     draftingView);
                 family.LookupParameter("Distance1")
@@ -1302,7 +1320,7 @@ namespace ColumnDesign.Methods
                         ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_w, DisplayUnitType.DUT_MILLIMETERS));
                     family.LookupParameter("Distance2")
                         ?.Set(UnitUtils.ConvertToInternalUnits(t, DisplayUnitType.DUT_MILLIMETERS));
-                    
+
                     if (Math.Abs(pt4[1] - ptW[1] - WinPos) < 0.001)
                     {
                         pt4[1] += WinGap;
@@ -1477,7 +1495,8 @@ namespace ColumnDesign.Methods
 
             pt18[0] = ptA[0] + ply_width_x;
             pt18[1] = ptA[1] + stud_base_gap;
-            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"),
+                draftingView);
             family.LookupParameter("Distance1")
                 ?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
             if (DrawB)
@@ -1493,13 +1512,16 @@ namespace ColumnDesign.Methods
             {
                 pt18[0] = ptW[0] + ply_width_w;
                 pt18[1] = ptW[1] + stud_base_gap;
-                family =_doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits( WinPos - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"),
+                    draftingView);
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(WinPos - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
                 pt18[0] = ptW[0] + ply_width_w;
                 pt18[1] = ptW[1] + WinPos + WinGap;
-                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"), draftingView);
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits( z - WinPos, DisplayUnitType.DUT_MILLIMETERS));
-
+                family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt18), GetFamilySymbolByName("VBA_CHAMF"),
+                    draftingView);
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(z - WinPos, DisplayUnitType.DUT_MILLIMETERS));
             }
 
             if (window == false)
@@ -1511,13 +1533,14 @@ namespace ColumnDesign.Methods
                     family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20), GetFamilySymbolByName(stud_face_block),
                         draftingView);
                     RotateFamily(family, 90);
-                    family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits( z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
+                    family.LookupParameter("Distance1")
+                        ?.Set(UnitUtils.ConvertToInternalUnits(z - stud_base_gap, DisplayUnitType.DUT_MILLIMETERS));
                     family.LookupParameter("Solid")?.Set(1);
-                    textNoteOptions   = new TextNoteOptions
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Middle,
                         HorizontalAlignment = HorizontalTextAlignment.Center,
-                        Rotation = Math.PI/2,
+                        Rotation = Math.PI / 2,
                         TypeId = new FilteredElementCollector(_doc)
                             .OfClass(typeof(TextNoteType))
                             .Cast<TextNoteType>()
@@ -1531,7 +1554,8 @@ namespace ColumnDesign.Methods
                             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                             break;
                         case "VBA_LVL_FACE":
-                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                textNoteOptions);
                             break;
                     }
                 }
@@ -1548,13 +1572,15 @@ namespace ColumnDesign.Methods
                             GetFamilySymbolByName(stud_face_block),
                             draftingView);
                         RotateFamily(family, 90);
-                        family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(WinPos - stud_base_gap - WinStudOff, DisplayUnitType.DUT_MILLIMETERS));
+                        family.LookupParameter("Distance1")
+                            ?.Set(UnitUtils.ConvertToInternalUnits(WinPos - stud_base_gap - WinStudOff,
+                                DisplayUnitType.DUT_MILLIMETERS));
                         family.LookupParameter("Solid")?.Set(1);
-                        textNoteOptions   = new TextNoteOptions
+                        textNoteOptions = new TextNoteOptions
                         {
                             VerticalAlignment = VerticalTextAlignment.Middle,
                             HorizontalAlignment = HorizontalTextAlignment.Center,
-                            Rotation = Math.PI/2,
+                            Rotation = Math.PI / 2,
                             TypeId = new FilteredElementCollector(_doc)
                                 .OfClass(typeof(TextNoteType))
                                 .Cast<TextNoteType>()
@@ -1568,7 +1594,8 @@ namespace ColumnDesign.Methods
                                 TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                                 break;
                             case "VBA_LVL_FACE":
-                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                    textNoteOptions);
                                 break;
                         }
 
@@ -1578,19 +1605,21 @@ namespace ColumnDesign.Methods
                             GetFamilySymbolByName(stud_face_block),
                             draftingView);
                         RotateFamily(family, 90);
-                        family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits( z - WinPos - WinStudOff, DisplayUnitType.DUT_MILLIMETERS));
+                        family.LookupParameter("Distance1")
+                            ?.Set(UnitUtils.ConvertToInternalUnits(z - WinPos - WinStudOff,
+                                DisplayUnitType.DUT_MILLIMETERS));
                         family.LookupParameter("Solid")?.Set(1);
-                        textNoteOptions   = new TextNoteOptions
+                        textNoteOptions = new TextNoteOptions
                         {
                             VerticalAlignment = VerticalTextAlignment.Middle,
                             HorizontalAlignment = HorizontalTextAlignment.Center,
-                            Rotation = Math.PI/2,
+                            Rotation = Math.PI / 2,
                             TypeId = new FilteredElementCollector(_doc)
                                 .OfClass(typeof(TextNoteType))
                                 .Cast<TextNoteType>()
                                 .First(q => q.Name == "2.0 mm").Id
                         };
-                       ptTemp = new double[2];
+                        ptTemp = new double[2];
                         ptTemp[0] = pt21[0] + 1.5;
                         ptTemp[1] = pt21[1] + (z - WinPos - WinStudOff) / 2;
                         switch (stud_face_block)
@@ -1599,7 +1628,8 @@ namespace ColumnDesign.Methods
                                 TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
                                 break;
                             case "VBA_LVL_FACE":
-                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL", textNoteOptions);
+                                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "1.5 X 3.5 LVL",
+                                    textNoteOptions);
                                 break;
                         }
                     }
@@ -1616,7 +1646,8 @@ namespace ColumnDesign.Methods
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(ptE), GetFamilySymbolByName("VBA_PLY"),
                 draftingView);
             RotateFamily(family, 90);
-            family.LookupParameter("Distance1").Set(UnitUtils.ConvertToInternalUnits(z, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                .Set(UnitUtils.ConvertToInternalUnits(z, DisplayUnitType.DUT_MILLIMETERS));
 
             if (window)
             {
@@ -1678,44 +1709,49 @@ namespace ColumnDesign.Methods
             pt21[0] = ptE[0] + chamf_thk + ply_width_e;
             pt21[1] = ptE[1] + z;
             var tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt21[1] - clamp_spacing[0], DisplayUnitType.DUT_MILLIMETERS), 0);               
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt21[1] - clamp_spacing[0], DisplayUnitType.DUT_MILLIMETERS), 0);
             var tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt21[1], DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt21[1], DisplayUnitType.DUT_MILLIMETERS), 0);
             var line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            var curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            var curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             var references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             for (int i = 0; i < n_clamps; i++)
             {
                 pt21[1] -= clamp_spacing[i];
                 family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt21), GetFamilySymbolByName(clamp_block_pr),
                     draftingView);
                 _doc.Regenerate();
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(1.5 + ply_thk + chamf_thk + ply_width_e, DisplayUnitType.DUT_MILLIMETERS));
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(1.5 + ply_thk + chamf_thk + ply_width_e,
+                        DisplayUnitType.DUT_MILLIMETERS));
                 if (i != 0)
                 {
                     tempXYZ1 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt21[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt21[1], DisplayUnitType.DUT_MILLIMETERS), 0);
                     tempXYZ2 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt21[1] + clamp_spacing[i], DisplayUnitType.DUT_MILLIMETERS), 0);         
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt21[1] + clamp_spacing[i],
+                                DisplayUnitType.DUT_MILLIMETERS), 0);
                     line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                    curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-                   references = new ReferenceArray();
+                    curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                    references = new ReferenceArray();
                     references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                     references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 }
 
                 pt22[0] = pt21[0] - clamp_L + 3.75 - 12;
                 pt22[1] = ptE[1] + clamp_spacing_con[i] + 1.5;
                 var clamp_str = $"{clamp_spacing_con[i]}\"";
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Left,
@@ -1738,7 +1774,7 @@ namespace ColumnDesign.Methods
 
                 if (i < n_top_clamps)
                 {
-                    textNoteOptions   = new TextNoteOptions
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Top,
                         HorizontalAlignment = HorizontalTextAlignment.Left,
@@ -1751,7 +1787,7 @@ namespace ColumnDesign.Methods
                 }
                 else
                 {
-                    textNoteOptions   = new TextNoteOptions
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Top,
                         HorizontalAlignment = HorizontalTextAlignment.Left,
@@ -1763,18 +1799,19 @@ namespace ColumnDesign.Methods
                     TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt25), "CLAMP", textNoteOptions);
                 }
             }
+
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptE[1] + bot_clamp_gap, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptE[1] + bot_clamp_gap, DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L+2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptE[1], DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt21[0] - clamp_L + 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptE[1], DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             if (n_top_clamps >= 2 || _ui.Picking.IsChecked == true)
             {
                 pt27[0] = ptE[0] + chamf_thk + 2;
@@ -1908,7 +1945,7 @@ namespace ColumnDesign.Methods
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_A"),
                     draftingView);
                 pt26[0] = ptE[0] + chamf_thk + ply_width_e + 1.3;
-                pt26[1] = ptE[1] + z - clamp_spacing[0] + 3l;
+                pt26[1] = ptE[1] + z - clamp_spacing[0] + 3;
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt26), GetFamilySymbolByName("VBA_LIFTING_SLING_B"),
                     draftingView);
             }
@@ -1961,8 +1998,10 @@ namespace ColumnDesign.Methods
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt20), GetFamilySymbolByName("VBA_2X4_SIDE"),
                 draftingView);
             _doc.Regenerate();
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_e + chamf_thk + ply_thk + 1.5 + 12, DisplayUnitType.DUT_MILLIMETERS));
-            textNoteOptions   = new TextNoteOptions
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_e + chamf_thk + ply_thk + 1.5 + 12,
+                    DisplayUnitType.DUT_MILLIMETERS));
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -1971,11 +2010,11 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "1.2 mm").Id
             };
-            
-            ptTemp[0] = pt20[0] + (ply_width_e + chamf_thk + ply_thk + 1.5 + 12)/2;
-            ptTemp[1] = pt20[1]-0.7;
+
+            ptTemp[0] = pt20[0] + (ply_width_e + chamf_thk + ply_thk + 1.5 + 12) / 2;
+            ptTemp[1] = pt20[1] - 0.7;
             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "2x4", textNoteOptions);
-            
+
             pt30[0] = ptE[0] + chamf_thk + ply_width_e + 6;
             pt30[1] = ptE[1] + 2.25;
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt30), GetFamilySymbolByName("VBA_DOWN_PLATE_NOTES"),
@@ -1985,7 +2024,8 @@ namespace ColumnDesign.Methods
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt8), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, 180);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
 
             for (var j = 0; j < n_studs_x; j++)
             {
@@ -2003,7 +2043,8 @@ namespace ColumnDesign.Methods
                     GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                     draftingView);
                 RotateFamily(family, 180);
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
 
                 for (int j = 0; j < n_studs_y; j++)
                 {
@@ -2022,7 +2063,8 @@ namespace ColumnDesign.Methods
                     GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                     draftingView);
                 RotateFamily(family, 180);
-                family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_w, DisplayUnitType.DUT_MILLIMETERS));
+                family.LookupParameter("Distance1")
+                    ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_w, DisplayUnitType.DUT_MILLIMETERS));
                 for (int j = 0; j < n_studs_w; j++)
                 {
                     pt11[0] = ptW[0] + ply_width_w + chamf_thk - 3.5 - stud_spacing_w[j];
@@ -2031,58 +2073,68 @@ namespace ColumnDesign.Methods
                         draftingView);
                 }
             }
+
             tempXYZ1 =
                 new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0], DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt8[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    UnitUtils.ConvertToInternalUnits(pt8[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]-ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt8[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] - ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt8[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]+ chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt8[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt8[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]-ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(pt8[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] - ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt8[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             for (int i = 0; i < n_studs_x; i++)
             {
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]+ chamf_thk - stud_spacing_x[stud_spacing_x.Length-1-i], DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt8[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(
+                        UnitUtils.ConvertToInternalUnits(
+                            pt8[0] + chamf_thk - stud_spacing_x[stud_spacing_x.Length - 1 - i],
+                            DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt8[1] + 1.5 + (i + 2) * 5, DisplayUnitType.DUT_MILLIMETERS),
+                        0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]-ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt8[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] - ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt8[1] + 1.5 + (i + 2) * 5, DisplayUnitType.DUT_MILLIMETERS),
+                        0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             }
-                tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] - stud_spacing_x[stud_spacing_x.Length-1]- 3.5 + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt8[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0); 
-                tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]-ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt8[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0);         
-                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-                references = new ReferenceArray();
-                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-                
+
+            tempXYZ1 =
+                new XYZ(
+                    UnitUtils.ConvertToInternalUnits(
+                        pt8[0] - stud_spacing_x[stud_spacing_x.Length - 1] - 3.5 + chamf_thk,
+                        DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt8[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
+            tempXYZ2 =
+                new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0] - ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(pt8[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
+            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+            references = new ReferenceArray();
+            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+            _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+
             // TODO  SMALL LINE 0.125 mm
             // tempXYZ1 =
             //     new XYZ(UnitUtils.ConvertToInternalUnits(pt8[0]  + chamf_thk- stud_start_offset, DisplayUnitType.DUT_MILLIMETERS),
@@ -2097,58 +2149,67 @@ namespace ColumnDesign.Methods
             // references.Append(curve1.GeometryCurve.GetEndPointReference(1));
             // _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
             if (DrawB)
-            {  
+            {
                 tempXYZ1 =
                     new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0], DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        UnitUtils.ConvertToInternalUnits(pt9[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]-ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] - ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt9[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]+ chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt9[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]-ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] - ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt9[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 for (int i = 0; i < n_studs_y; i++)
                 {
                     tempXYZ1 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]+ chamf_thk - stud_spacing_y[stud_spacing_y.Length-1-i], DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt9[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(
+                                pt9[0] + chamf_thk - stud_spacing_y[stud_spacing_y.Length - 1 - i],
+                                DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt9[1] + 1.5 + (i + 2) * 5,
+                                DisplayUnitType.DUT_MILLIMETERS), 0);
                     tempXYZ2 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]-ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt9[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                        new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] - ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt9[1] + 1.5 + (i + 2) * 5,
+                                DisplayUnitType.DUT_MILLIMETERS), 0);
                     line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                    curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                    curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                     references = new ReferenceArray();
                     references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                     references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 }
+
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] - stud_spacing_y[stud_spacing_y.Length-1]- 3.5 + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(
+                        UnitUtils.ConvertToInternalUnits(
+                            pt9[0] - stud_spacing_y[stud_spacing_y.Length - 1] - 3.5 + chamf_thk,
+                            DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt9[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0]-ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt9[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt9[0] - ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt9[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt9), GetFamilySymbolByName("VBA_TOP_SECTION_DETAILS1"),
                     draftingView);
             }
@@ -2157,70 +2218,80 @@ namespace ColumnDesign.Methods
             {
                 tempXYZ1 =
                     new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0], DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        UnitUtils.ConvertToInternalUnits(pt10[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]-ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0] - ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt10[1] - ply_thk - 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]+ chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0] + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt10[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]-ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]-ply_thk-10, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0] - ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt10[1] - ply_thk - 10, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 for (int i = 0; i < n_studs_w; i++)
                 {
                     tempXYZ1 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]+ chamf_thk - stud_spacing_w[stud_spacing_w.Length-1-i], DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt10[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(
+                                pt10[0] + chamf_thk - stud_spacing_w[stud_spacing_w.Length - 1 - i],
+                                DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt10[1] + 1.5 + (i + 2) * 5,
+                                DisplayUnitType.DUT_MILLIMETERS), 0);
                     tempXYZ2 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]-ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(pt10[1]+1.5+(i+2)*5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(pt10[0] - ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(pt10[1] + 1.5 + (i + 2) * 5,
+                                DisplayUnitType.DUT_MILLIMETERS), 0);
                     line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                    curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                    curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                     references = new ReferenceArray();
                     references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                     references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                    _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 }
+
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0] - stud_spacing_w[stud_spacing_w.Length-1]- 3.5 + chamf_thk, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(
+                        UnitUtils.ConvertToInternalUnits(
+                            pt10[0] - stud_spacing_w[stud_spacing_w.Length - 1] - 3.5 + chamf_thk,
+                            DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt10[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0]-ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(pt10[1]+5, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(pt10[0] - ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(pt10[1] + 5, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             }
 
             var PlyTemp = ptA[1] + ply_seams[0];
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]+ply_width_x+7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] + ply_width_x + 7, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1], DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]+ply_width_x+7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] + ply_width_x + 7, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            var dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            var dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             dimLine.Suffix = "PLYWOOD";
             if (ply_seams.Length >= 2)
             {
@@ -2228,74 +2299,78 @@ namespace ColumnDesign.Methods
                 {
                     PlyTemp += ply_seams[i];
                     tempXYZ1 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]+ply_width_x+7, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(PlyTemp-ply_seams[i], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(ptA[0] + ply_width_x + 7, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(PlyTemp - ply_seams[i], DisplayUnitType.DUT_MILLIMETERS),
+                            0);
                     tempXYZ2 =
-                        new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]+ply_width_x+7, DisplayUnitType.DUT_MILLIMETERS),
-                            UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                        new XYZ(
+                            UnitUtils.ConvertToInternalUnits(ptA[0] + ply_width_x + 7, DisplayUnitType.DUT_MILLIMETERS),
+                            UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                     line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                    curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                    curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                     references = new ReferenceArray();
                     references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                     references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                    dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                    dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                     dimLine.Suffix = "PLYWOOD";
                 }
             }
+
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1], DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1]+z, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1] + z, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             dimLine.Suffix = "OVERALL HEIGHT";
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]-2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1]+z, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] - 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1] + z, DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]-2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1]+ stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] - 2, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1] + stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             dimLine.Suffix = "STUD";
             tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0]+ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1]+z+2, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0] + ply_width_x, DisplayUnitType.DUT_MILLIMETERS),
+                    UnitUtils.ConvertToInternalUnits(ptA[1] + z + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
             tempXYZ2 =
                 new XYZ(UnitUtils.ConvertToInternalUnits(ptA[0], DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptA[1]+z+2, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    UnitUtils.ConvertToInternalUnits(ptA[1] + z + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
             references = new ReferenceArray();
             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+            dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             dimLine.Suffix = "PLYWOOD";
             if (DrawB)
             {
                 PlyTemp = ptB[1] + ply_seams[0];
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]+ply_width_y+7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptB[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] + ply_width_y + 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1], DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]+ply_width_y+7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] + ply_width_y + 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 dimLine.Suffix = "PLYWOOD";
                 if (ply_seams.Length >= 2)
                 {
@@ -2303,79 +2378,85 @@ namespace ColumnDesign.Methods
                     {
                         PlyTemp += ply_seams[i];
                         tempXYZ1 =
-                            new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]+ply_width_y+7, DisplayUnitType.DUT_MILLIMETERS),
-                                UnitUtils.ConvertToInternalUnits(PlyTemp-ply_seams[i], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                            new XYZ(
+                                UnitUtils.ConvertToInternalUnits(ptB[0] + ply_width_y + 7,
+                                    DisplayUnitType.DUT_MILLIMETERS),
+                                UnitUtils.ConvertToInternalUnits(PlyTemp - ply_seams[i],
+                                    DisplayUnitType.DUT_MILLIMETERS), 0);
                         tempXYZ2 =
-                            new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]+ply_width_y+7, DisplayUnitType.DUT_MILLIMETERS),
-                                UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                            new XYZ(
+                                UnitUtils.ConvertToInternalUnits(ptB[0] + ply_width_y + 7,
+                                    DisplayUnitType.DUT_MILLIMETERS),
+                                UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                         line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                        curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                        curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                         references = new ReferenceArray();
                         references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                         references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                        dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                        dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),
+                            references);
                         dimLine.Suffix = "PLYWOOD";
                     }
                 }
 
                 tempXYZ1 =
                     new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptB[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptB[1]+z, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "OVERALL HEIGHT";
+                        UnitUtils.ConvertToInternalUnits(ptB[1], DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1] + z, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "OVERALL HEIGHT";
 
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]-2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptB[1]+z, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]-2, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptB[1]+ stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "STUD";
-            
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0]+ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptB[1]+z+2, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0], DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptB[1]+z+2, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "PLYWOOD";
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] - 2, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1] + z, DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] - 2, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1] + stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "STUD";
+
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0] + ply_width_y, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1] + z + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptB[0], DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptB[1] + z + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "PLYWOOD";
             }
 
             if (DrawW)
             {
                 PlyTemp = ptW[1] + ply_seams_win[0];
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptW[1], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1], DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
                 dimLine.Suffix = "PLYWOOD";
                 if (ply_seams_win.Length >= 2)
                 {
@@ -2390,33 +2471,45 @@ namespace ColumnDesign.Methods
                         if (ply_seams_win[i] < 26)
                         {
                             tempXYZ1 =
-                                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                                    UnitUtils.ConvertToInternalUnits(PlyTemp-ply_seams_win[i], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                                new XYZ(
+                                    UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7,
+                                        DisplayUnitType.DUT_MILLIMETERS),
+                                    UnitUtils.ConvertToInternalUnits(PlyTemp - ply_seams_win[i],
+                                        DisplayUnitType.DUT_MILLIMETERS), 0);
                             tempXYZ2 =
-                                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                                new XYZ(
+                                    UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7,
+                                        DisplayUnitType.DUT_MILLIMETERS),
+                                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                             references = new ReferenceArray();
                             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                            dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),
+                                references);
                             dimLine.Suffix = "PLYWOOD";
                         }
                         else
                         {
                             tempXYZ1 =
-                                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                                    UnitUtils.ConvertToInternalUnits(PlyTemp-ply_seams_win[i], DisplayUnitType.DUT_MILLIMETERS), 0); 
+                                new XYZ(
+                                    UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7,
+                                        DisplayUnitType.DUT_MILLIMETERS),
+                                    UnitUtils.ConvertToInternalUnits(PlyTemp - ply_seams_win[i],
+                                        DisplayUnitType.DUT_MILLIMETERS), 0);
                             tempXYZ2 =
-                                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w+7, DisplayUnitType.DUT_MILLIMETERS),
-                                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                                new XYZ(
+                                    UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w + 7,
+                                        DisplayUnitType.DUT_MILLIMETERS),
+                                    UnitUtils.ConvertToInternalUnits(PlyTemp, DisplayUnitType.DUT_MILLIMETERS), 0);
                             line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                            curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                             references = new ReferenceArray();
                             references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                             references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                            dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),
+                                references);
                             dimLine.Suffix = "PLYWOOD";
                         }
                     }
@@ -2424,100 +2517,106 @@ namespace ColumnDesign.Methods
 
                 tempXYZ1 =
                     new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptW[1]+WinPos-WinStudOff, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+ stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "STUD";
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos - WinStudOff, DisplayUnitType.DUT_MILLIMETERS),
+                        0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + stud_base_gap, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "STUD";
 
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+WinPos+WinStudOff+WinGap, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+ z + WinGap, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "STUD";
-            
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+WinPos-WinStudOff, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+WinPos, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] -7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+ WinPos + WinStudOff + WinGap, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]-7, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+ WinPos + WinGap, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos + WinStudOff + WinGap,
+                            DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + z + WinGap, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "STUD";
 
-            tempXYZ1 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0]+ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+z+ WinGap+2, DisplayUnitType.DUT_MILLIMETERS), 0); 
-            tempXYZ2 =
-                new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0], DisplayUnitType.DUT_MILLIMETERS),
-                    UnitUtils.ConvertToInternalUnits(ptW[1]+z+ WinGap+2, DisplayUnitType.DUT_MILLIMETERS), 0);         
-            line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-            curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
-            references = new ReferenceArray();
-            references.Append(curve1.GeometryCurve.GetEndPointReference(0));
-            references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-            dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-            dimLine.Suffix = "PLYWOOD";
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos - WinStudOff, DisplayUnitType.DUT_MILLIMETERS),
+                        0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos + WinStudOff + WinGap,
+                            DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] - 7, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + WinPos + WinGap, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+
+                tempXYZ1 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0] + ply_width_w, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + z + WinGap + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
+                tempXYZ2 =
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptW[0], DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptW[1] + z + WinGap + 2, DisplayUnitType.DUT_MILLIMETERS), 0);
+                line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
+                references = new ReferenceArray();
+                references.Append(curve1.GeometryCurve.GetEndPointReference(0));
+                references.Append(curve1.GeometryCurve.GetEndPointReference(1));
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+                dimLine.Suffix = "PLYWOOD";
             }
 
             if (window)
-            {   
+            {
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0]+chamf_thk-5, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptE[1]+WinPos-7, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0] + chamf_thk - 5, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptE[1] + WinPos - 7, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0]+chamf_thk-5, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptE[1]+WinPos+ win_clamp_top_max-7, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0] + chamf_thk - 5, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptE[1] + WinPos + win_clamp_top_max - 7,
+                            DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
-                
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
+
                 tempXYZ1 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0]+chamf_thk-5, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptE[1]+WinPos-7, DisplayUnitType.DUT_MILLIMETERS), 0); 
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0] + chamf_thk - 5, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptE[1] + WinPos - 7, DisplayUnitType.DUT_MILLIMETERS), 0);
                 tempXYZ2 =
-                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0]+chamf_thk-5, DisplayUnitType.DUT_MILLIMETERS),
-                        UnitUtils.ConvertToInternalUnits(ptE[1]+WinPos- win_clamp_bot_max-7, DisplayUnitType.DUT_MILLIMETERS), 0);         
+                    new XYZ(UnitUtils.ConvertToInternalUnits(ptE[0] + chamf_thk - 5, DisplayUnitType.DUT_MILLIMETERS),
+                        UnitUtils.ConvertToInternalUnits(ptE[1] + WinPos - win_clamp_bot_max - 7,
+                            DisplayUnitType.DUT_MILLIMETERS), 0);
                 line1 = Line.CreateBound(tempXYZ1, tempXYZ2);
-                curve1 =_doc.Create.NewDetailCurve(draftingView, line1);
+                curve1 = _doc.Create.NewDetailCurve(draftingView, line1);
                 references = new ReferenceArray();
                 references.Append(curve1.GeometryCurve.GetEndPointReference(0));
                 references.Append(curve1.GeometryCurve.GetEndPointReference(1));
-                dimLine =_doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2),references);
+                dimLine = _doc.Create.NewDimension(draftingView, Line.CreateBound(tempXYZ1, tempXYZ2), references);
             }
 
             pt13[0] = pt_o[0] + 427 + x - chamf_thk;
@@ -2568,11 +2667,13 @@ namespace ColumnDesign.Methods
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
             pt15[0] = pt13[0];
             pt15[1] = pt13[1] + 83.5;
-            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op), draftingView);
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_op),
+                draftingView);
             if (window)
             {
                 family.LookupParameter("Angle1")?.Set(swing_ang);
             }
+
             pt15[0] = pt13[0] - x;
             pt15[1] = pt13[1] + y + 83.5;
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(clamp_block_bk), draftingView);
@@ -2581,7 +2682,7 @@ namespace ColumnDesign.Methods
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME), draftingView);
             pt15[0] = pt13[0];
             pt15[1] = pt13[1] + y;
-            family =_doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME), draftingView);
+            family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt15), GetFamilySymbolByName(SQ_NAME), draftingView);
             RotateFamily(family, 180);
             if (_ui.Regular.IsChecked == true)
             {
@@ -2651,52 +2752,60 @@ namespace ColumnDesign.Methods
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             _doc.Regenerate();
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
             pt12[0] = pt12[0] - ply_thk - chamf_thk;
             pt12[1] = pt12[1] + ply_width_y + ply_thk - chamf_thk - 1.5;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, -90);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
 
             pt12[0] = pt12[0] + ply_thk - chamf_thk + ply_width_x - 1.5;
             pt12[1] = pt12[1] + ply_thk + chamf_thk;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, 180);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
 
             pt12[0] = pt12[0] + ply_thk + chamf_thk;
             pt12[1] = pt12[1] - ply_thk + chamf_thk - ply_width_y + 1.5;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, 90);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
 
             pt12[0] = pt12[0] - ply_width_x + 1.5;
             pt12[1] = pt12[1] + 82;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             _doc.Regenerate();
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
             pt12[0] = pt12[0] - ply_thk - chamf_thk;
             pt12[1] = pt12[1] + ply_width_y - 1.5;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, -90);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
             pt12[0] = pt12[0] + ply_width_x - 1.5;
             pt12[1] = pt12[1] + ply_thk + chamf_thk;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, 180);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_x, DisplayUnitType.DUT_MILLIMETERS));
             pt12[0] = pt12[0] + ply_thk + chamf_thk;
             pt12[1] = pt12[1] - ply_width_y + 1.5;
             family = _doc.Create.NewFamilyInstance(GetXYZByPoint(pt12), GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                 draftingView);
             RotateFamily(family, 90);
-            family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
+            family.LookupParameter("Distance1")
+                ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
 
             pt14[1] = pt13[1] - ply_thk - 1.5;
             for (int j = 0; j < n_studs_x; j++)
@@ -2801,8 +2910,8 @@ namespace ColumnDesign.Methods
                         GetFamilySymbolByName("VBA_PLY_WITH_CHAMFER"),
                         draftingView);
                     RotateFamily(family, (swing_ang + Math.PI) * 180 / Math.PI);
-                    family.LookupParameter("Distance1")?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
-
+                    family.LookupParameter("Distance1")
+                        ?.Set(UnitUtils.ConvertToInternalUnits(ply_width_y, DisplayUnitType.DUT_MILLIMETERS));
                 }
             }
 
@@ -2888,7 +2997,7 @@ namespace ColumnDesign.Methods
             pl_pts[5] = pl_pts[5] + 83.5;
             pl_pts[7] = pl_pts[7] + 83.5;
             pl_pts[9] = pl_pts[9] + 83.5;
-            
+
             //     TODO Hatching
 //     Set OuterLoop(0) = ThisDrawing.ModelSpace.AddLightWeightPolyline(pl_pts)
 //     Set hatchObj = ThisDrawing.ModelSpace.AddHatch(0, "AR-CONC", True)
@@ -2901,7 +3010,7 @@ namespace ColumnDesign.Methods
                 pt17[1] = pt13[1] + 0.75 + y / 2;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -2916,7 +3025,7 @@ namespace ColumnDesign.Methods
                 pt17[1] = pt13[1] + 2.1 + y / 2 + 83.5;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -2925,7 +3034,7 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "1.5 mm Bold").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "Top\nCLAMPS", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "Top\nCLAMPS", textNoteOptions);
             }
             else
             {
@@ -2933,7 +3042,7 @@ namespace ColumnDesign.Methods
                 pt17[1] = pt13[1] + 1.25 + y / 2;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -2943,12 +3052,12 @@ namespace ColumnDesign.Methods
                         .First(q => q.Name == "2.5 mm Bold").Id
                 };
                 TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "CLAMPS", textNoteOptions);
-                
+
                 pt17[0] = pt13[0] - x;
                 pt17[1] = pt13[1] + 3.35 + y / 2 + 83.5;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -2966,7 +3075,7 @@ namespace ColumnDesign.Methods
                 pt17[1] = pt13[1] + y - 0.5 + 83.5 * i;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -2975,31 +3084,31 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "1.75 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE A", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "SIDE A", textNoteOptions);
                 if (DrawB)
                 {
                     pt17[0] = pt13[0] - x + 0.5;
                     pt17[1] = pt13[1] + 83.5 * i;
                     ptTemp[0] = pt17[0];
-                    ptTemp[1] = pt17[1]+y/2;
-                    textNoteOptions   = new TextNoteOptions
+                    ptTemp[1] = pt17[1] + y / 2;
+                    textNoteOptions = new TextNoteOptions
                     {
                         VerticalAlignment = VerticalTextAlignment.Top,
                         HorizontalAlignment = HorizontalTextAlignment.Center,
-                        Rotation = Math.PI/2,
+                        Rotation = Math.PI / 2,
                         TypeId = new FilteredElementCollector(_doc)
                             .OfClass(typeof(TextNoteType))
                             .Cast<TextNoteType>()
                             .First(q => q.Name == "1.75 mm").Id
                     };
-                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE B", textNoteOptions);
+                    TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "SIDE B", textNoteOptions);
                 }
 
                 pt17[0] = pt13[0] - x;
                 pt17[1] = pt13[1] + 2.25 + 83.5 * i;
                 ptTemp[0] = pt17[0] + x / 2;
                 ptTemp[1] = pt17[1];
-                textNoteOptions   = new TextNoteOptions
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3008,51 +3117,51 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "1.75 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  $"{x}", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), $"{x}", textNoteOptions);
                 pt17[0] = pt13[0] - 2.25;
                 pt17[1] = pt13[1] + 83.5 * i;
                 ptTemp[0] = pt17[0];
-                ptTemp[1] = pt17[1]+y/2;
-                textNoteOptions   = new TextNoteOptions
+                ptTemp[1] = pt17[1] + y / 2;
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Top,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
-                    Rotation = Math.PI/2,
+                    Rotation = Math.PI / 2,
                     TypeId = new FilteredElementCollector(_doc)
                         .OfClass(typeof(TextNoteType))
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "1.75 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  $"{y}", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), $"{y}", textNoteOptions);
             }
 
 
-            
             if (z > 190)
             {
                 _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_o), GetFamilySymbolByName("VBA_COLUMN_BACKGROUND_HIGH"),
                     draftingView);
-               var imageX = UnitUtils.ConvertToInternalUnits(385, DisplayUnitType.DUT_MILLIMETERS);
-               var imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
-               var imageOption = new ImageImportOptions
+                var imageX = UnitUtils.ConvertToInternalUnits(385, DisplayUnitType.DUT_MILLIMETERS);
+                var imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
+                var imageOption = new ImageImportOptions
                 {
-                    RefPoint = new XYZ(imageX,imageY,0),
-                    Resolution = 300,
+                    RefPoint = new XYZ(imageX, imageY, 0),
+                    Resolution = 50,
                     Placement = BoxPlacement.Center
                 };
-                _doc.Import($"{GlobalNames.WtFileLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView, out var image);
+                _doc.Import($"{GlobalNames.WtFilesLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView,
+                    out var image);
                 image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
                     .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
-                
+
                 imageX = UnitUtils.ConvertToInternalUnits(435, DisplayUnitType.DUT_MILLIMETERS);
-               imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
-               imageOption = new ImageImportOptions
+                imageY = UnitUtils.ConvertToInternalUnits(360, DisplayUnitType.DUT_MILLIMETERS);
+                imageOption = new ImageImportOptions
                 {
-                    RefPoint = new XYZ(imageX,imageY,0),
-                    Resolution = 300,
+                    RefPoint = new XYZ(imageX, imageY, 0),
+                    Resolution = 50,
                     Placement = BoxPlacement.Center
                 };
-                _doc.Import($"{GlobalNames.WtFileLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
+                _doc.Import($"{GlobalNames.WtFilesLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
                 image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
                     .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
             }
@@ -3065,23 +3174,24 @@ namespace ColumnDesign.Methods
                 var imageY = UnitUtils.ConvertToInternalUnits(310, DisplayUnitType.DUT_MILLIMETERS);
                 var imageOption = new ImageImportOptions
                 {
-                    RefPoint = new XYZ(imageX,imageY,0),
-                    Resolution = 300,
+                    RefPoint = new XYZ(imageX, imageY, 0),
+                    Resolution = 50,
                     Placement = BoxPlacement.Center
                 };
-                _doc.Import($"{GlobalNames.WtFileLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView, out var image);
+                _doc.Import($"{GlobalNames.WtFilesLocationPrefix}POWERLAG SCREW.jpg", imageOption, draftingView,
+                    out var image);
                 image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
                     .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
-                
+
                 imageX = UnitUtils.ConvertToInternalUnits(435, DisplayUnitType.DUT_MILLIMETERS);
                 imageY = UnitUtils.ConvertToInternalUnits(310, DisplayUnitType.DUT_MILLIMETERS);
                 imageOption = new ImageImportOptions
                 {
-                    RefPoint = new XYZ(imageX,imageY,0),
-                    Resolution = 300,
+                    RefPoint = new XYZ(imageX, imageY, 0),
+                    Resolution = 50,
                     Placement = BoxPlacement.Center
                 };
-                _doc.Import($"{GlobalNames.WtFileLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
+                _doc.Import($"{GlobalNames.WtFilesLocationPrefix}HEAD BOLT.jpg", imageOption, draftingView, out image);
                 image.get_Parameter(BuiltInParameter.RASTER_SHEETWIDTH)
                     .Set(UnitUtils.ConvertToInternalUnits(45, DisplayUnitType.DUT_MILLIMETERS));
             }
@@ -3096,11 +3206,11 @@ namespace ColumnDesign.Methods
             }
 
             pt_blk[0] = ptA[0] + ply_width_x / 2;
-            pt_blk[1]= pt_o[1] + 9;
+            pt_blk[1] = pt_o[1] + 9;
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
-            ptTemp[0] =  pt_blk[0]-20.5;
-            ptTemp[1] =   pt_blk[1];
-            textNoteOptions   = new TextNoteOptions
+            ptTemp[0] = pt_blk[0] - 20.5;
+            ptTemp[1] = pt_blk[1];
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3109,10 +3219,10 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "4.5 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "A", textNoteOptions);
-            ptTemp[0] =  pt_blk[0]+6;
-            ptTemp[1] =   pt_blk[1]+2;
-            textNoteOptions   = new TextNoteOptions
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "A", textNoteOptions);
+            ptTemp[0] = pt_blk[0] + 6;
+            ptTemp[1] = pt_blk[1] + 2;
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3121,10 +3231,10 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "3.0 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE \"A\" PANEL", textNoteOptions);
-            ptTemp[0] =  pt_blk[0]+6;
-            ptTemp[1] =   pt_blk[1]-2;
-            textNoteOptions   = new TextNoteOptions
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "SIDE \"A\" PANEL", textNoteOptions);
+            ptTemp[0] = pt_blk[0] + 6;
+            ptTemp[1] = pt_blk[1] - 2;
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3133,15 +3243,16 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "2.25 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "VIEWED FROM PLYWOOD FACE", textNoteOptions);
             if (DrawB)
             {
-                pt_blk[0]= ptB[0] + ply_width_y / 2;
+                pt_blk[0] = ptB[0] + ply_width_y / 2;
                 pt_blk[1] = pt_o[1] + 9;
-                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
-                ptTemp[0] =  pt_blk[0]-20.5;
-                ptTemp[1] =   pt_blk[1];
-                textNoteOptions   = new TextNoteOptions
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"),
+                    draftingView);
+                ptTemp[0] = pt_blk[0] - 20.5;
+                ptTemp[1] = pt_blk[1];
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3150,10 +3261,10 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "4.5 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "B", textNoteOptions);
-                ptTemp[0] =  pt_blk[0]+6;
-                ptTemp[1] =   pt_blk[1]+2;
-                textNoteOptions   = new TextNoteOptions
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "B", textNoteOptions);
+                ptTemp[0] = pt_blk[0] + 6;
+                ptTemp[1] = pt_blk[1] + 2;
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3162,10 +3273,10 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "3.0 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "SIDE \"B\" PANEL", textNoteOptions);
-                ptTemp[0] =  pt_blk[0]+6;
-                ptTemp[1] =   pt_blk[1]-2;
-                textNoteOptions   = new TextNoteOptions
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "SIDE \"B\" PANEL", textNoteOptions);
+                ptTemp[0] = pt_blk[0] + 6;
+                ptTemp[1] = pt_blk[1] - 2;
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3174,16 +3285,19 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "2.25 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "VIEWED FROM PLYWOOD FACE",
+                    textNoteOptions);
             }
+
             if (DrawW)
             {
                 pt_blk[0] = ptW[0] + ply_width_w / 2;
                 pt_blk[1] = pt_o[1] + 9;
-                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
-                ptTemp[0] =  pt_blk[0]-20.5;
-                ptTemp[1] =   pt_blk[1];
-                textNoteOptions   = new TextNoteOptions
+                _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"),
+                    draftingView);
+                ptTemp[0] = pt_blk[0] - 20.5;
+                ptTemp[1] = pt_blk[1];
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3192,10 +3306,10 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "4.5 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "W", textNoteOptions);
-                ptTemp[0] =  pt_blk[0]+6;
-                ptTemp[1] =   pt_blk[1]+2;
-                textNoteOptions   = new TextNoteOptions
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "W", textNoteOptions);
+                ptTemp[0] = pt_blk[0] + 6;
+                ptTemp[1] = pt_blk[1] + 2;
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3204,10 +3318,10 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "3.0 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "POUR WINDOW PANEL", textNoteOptions);
-                ptTemp[0] =  pt_blk[0]+6;
-                ptTemp[1] =   pt_blk[1]-2;
-                textNoteOptions   = new TextNoteOptions
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "POUR WINDOW PANEL", textNoteOptions);
+                ptTemp[0] = pt_blk[0] + 6;
+                ptTemp[1] = pt_blk[1] - 2;
+                textNoteOptions = new TextNoteOptions
                 {
                     VerticalAlignment = VerticalTextAlignment.Middle,
                     HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3216,15 +3330,16 @@ namespace ColumnDesign.Methods
                         .Cast<TextNoteType>()
                         .First(q => q.Name == "2.25 mm").Id
                 };
-                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "VIEWED FROM PLYWOOD FACE", textNoteOptions);
+                TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "VIEWED FROM PLYWOOD FACE",
+                    textNoteOptions);
             }
 
             pt_blk[0] = ptE[0] + ply_width_e / 2;
             pt_blk[1] = pt_o[1] + 9;
             _doc.Create.NewFamilyInstance(GetXYZByPoint(pt_blk), GetFamilySymbolByName("VBA_DETAIL_REF"), draftingView);
-            ptTemp[0] =  pt_blk[0]-20.5;
-            ptTemp[1] =   pt_blk[1];
-            textNoteOptions   = new TextNoteOptions
+            ptTemp[0] = pt_blk[0] - 20.5;
+            ptTemp[1] = pt_blk[1];
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3233,10 +3348,10 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "4.5 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "E", textNoteOptions);
-            ptTemp[0] =  pt_blk[0]+6;
-            ptTemp[1] =   pt_blk[1]+2;
-            textNoteOptions   = new TextNoteOptions
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "E", textNoteOptions);
+            ptTemp[0] = pt_blk[0] + 6;
+            ptTemp[1] = pt_blk[1] + 2;
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Middle,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3245,12 +3360,12 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "3.0 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp),  "COLUMN FORM ELEVATION", textNoteOptions);
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(ptTemp), "COLUMN FORM ELEVATION", textNoteOptions);
 
             var count_str = $"FAB {n_col}-EA";
             pt32[0] = ptE[0] + ply_width_e / 2;
             pt32[1] = pt_o[1] + 7;
-            textNoteOptions   = new TextNoteOptions
+            textNoteOptions = new TextNoteOptions
             {
                 VerticalAlignment = VerticalTextAlignment.Top,
                 HorizontalAlignment = HorizontalTextAlignment.Center,
@@ -3259,7 +3374,8 @@ namespace ColumnDesign.Methods
                     .Cast<TextNoteType>()
                     .First(q => q.Name == "2.25 mm").Id
             };
-            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt32), UnitUtils.ConvertToInternalUnits(30, DisplayUnitType.DUT_MILLIMETERS), count_str, textNoteOptions);
+            TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt32),
+                UnitUtils.ConvertToInternalUnits(30, DisplayUnitType.DUT_MILLIMETERS), count_str, textNoteOptions);
         }
 
         public static XYZ GetXYZByPoint(double[] point)
@@ -3290,7 +3406,7 @@ namespace ColumnDesign.Methods
                     .Cast<FamilySymbol>()
                     .First(s => s.Name.Equals(name));
             }
-            catch (Exception e)
+            catch (Exception _)
             {
                 throw new Exception($"Not found the family: {name}");
             }
@@ -3299,11 +3415,29 @@ namespace ColumnDesign.Methods
             return symbol;
         }
 
-        private static XYZ CalculateDraftingLocation(View view, View sheet)
+        private static XYZ CalculateDraftingLocation(View view, View sheet, ColumnCreatorView ui)
         {
-            var x = UnitUtils.ConvertToInternalUnits(268.93, DisplayUnitType.DUT_MILLIMETERS);
-            var y = UnitUtils.ConvertToInternalUnits(181.7, DisplayUnitType.DUT_MILLIMETERS);
-            return new XYZ(x,y,0);
+            if (ui.Tabs.SelectedIndex == 0)
+            {
+                if (ui.WindowX.IsChecked == false && ui.WindowY.IsChecked == false)
+                {
+                    var x = UnitUtils.ConvertToInternalUnits(268.93, DisplayUnitType.DUT_MILLIMETERS);
+                    var y = UnitUtils.ConvertToInternalUnits(181.7 + 2.61, DisplayUnitType.DUT_MILLIMETERS);
+                    return new XYZ(x, y, 0);
+                }
+                else
+                {
+                    var x = UnitUtils.ConvertToInternalUnits(268.93 + 8.5 + 0.161, DisplayUnitType.DUT_MILLIMETERS);
+                    var y = UnitUtils.ConvertToInternalUnits(181.7 + 2.61 + 0.753, DisplayUnitType.DUT_MILLIMETERS);
+                    return new XYZ(x, y, 0);
+                }
+            }
+            else
+            {
+                var x = UnitUtils.ConvertToInternalUnits(268.93 + 4.58, DisplayUnitType.DUT_MILLIMETERS);
+                var y = UnitUtils.ConvertToInternalUnits(181.7 - 0.461, DisplayUnitType.DUT_MILLIMETERS);
+                return new XYZ(x, y, 0);
+            }
         }
 
         private static ViewDrafting CreateDraftingView(Document doc, string sheetName)
@@ -3325,7 +3459,7 @@ namespace ColumnDesign.Methods
             var titleBlock = new FilteredElementCollector(doc)
                 .OfClass(typeof(FamilySymbol))
                 .OfCategory(BuiltInCategory.OST_TitleBlocks)
-                .First(element => element.Name.Contains(GlobalNames.WtTitleBlockFamilyName));
+                .First(element => element.Name.Contains("TitleBlock"));
 
             if (titleBlock == null) return null;
             var sheet = ViewSheet.Create(doc, titleBlock.Id);
@@ -3358,6 +3492,124 @@ namespace ColumnDesign.Methods
             }
 
             return sheet;
+        }
+
+        public static void LoadFamilies(Document doc)
+        {
+            try
+            {
+                var block = new FilteredElementCollector(doc)
+                    .OfClass(typeof(FamilySymbol))
+                    .OfCategory(BuiltInCategory.OST_DetailComponents)
+                    .First(element => element.Name.Contains("VBA_PLY"));
+            }
+            catch (Exception e)
+            {
+                TaskDialog.Show("Message", "Wait for the families to be loaded into the project");
+                var familyList = new List<string>()
+                {
+                    "TitleBlock.rfa",
+                    "VBA_2X2_NOTES.rfa",
+                    "VBA_2X4.rfa",
+                    "VBA_2X4_BOLT.rfa",
+                    "VBA_2X4_BOLT_HIDDEN.rfa",
+                    "VBA_2X4_FACE.rfa",
+                    "VBA_2X4_SIDE.rfa",
+                    "VBA_2X4_SPAX.rfa",
+                    "VBA_3-4_CHAMFER.rfa",
+                    "VBA_8-24_CLAMP_PLAN_BACK.rfa",
+                    "VBA_8-24_CLAMP_PLAN_OP.rfa",
+                    "VBA_8-24_CLAMP_PLAN_OP_WIN.rfa",
+                    "VBA_8-24_CLAMP_PROFILE.rfa",
+                    "VBA_8-24_CLAMP_PROFILE_FLIPPED.rfa",
+                    "VBA_12-36_CLAMP_PLAN_BACK.rfa",
+                    "VBA_12-36_CLAMP_PLAN_OP.rfa",
+                    "VBA_12-36_CLAMP_PLAN_OP_WIN.rfa",
+                    "VBA_12-36_CLAMP_PROFILE.rfa",
+                    "VBA_12-36_CLAMP_PROFILE_FLIPPED.rfa",
+                    "VBA_24-48_CLAMP_PLAN_BACK.rfa",
+                    "VBA_24-48_CLAMP_PLAN_OP.rfa",
+                    "VBA_24-48_CLAMP_PLAN_OP_WIN.rfa",
+                    "VBA_24-48_CLAMP_PROFILE.rfa",
+                    "VBA_24-48_CLAMP_PROFILE_FLIPPED.rfa",
+                    "VBA_36_SCISSOR_CLAMP_PLAN.rfa",
+                    "VBA_36_SCISSOR_CLAMP_PROFILE.rfa",
+                    "VBA_36_SCISSOR_CLAMP_PROFILE_FLIP.rfa",
+                    "VBA_48_SCISSOR_CLAMP_PLAN.rfa",
+                    "VBA_48_SCISSOR_CLAMP_PROFILE.rfa",
+                    "VBA_48_SCISSOR_CLAMP_PROFILE_FLIP.rfa",
+                    "VBA_60_SCISSOR_CLAMP_PLAN.rfa",
+                    "VBA_60_SCISSOR_CLAMP_PROFILE.rfa",
+                    "VBA_60_SCISSOR_CLAMP_PROFILE_FLIP.rfa",
+                    "VBA_AFB_7-11.rfa",
+                    "VBA_AFB_11-19.rfa",
+                    "VBA_AFB_FACE.rfa",
+                    "VBA_AFB_PLAN.rfa",
+                    "VBA_AFB_SIDE.rfa",
+                    "VBA_BRACE_ANGLE.rfa",
+                    "VBA_BRACE_NOTES.rfa",
+                    "VBA_CHAIN.rfa",
+                    "VBA_CHAMF.rfa",
+                    "VBA_COIL_ROD.rfa",
+                    "VBA_COIL_ROD_14.rfa",
+                    "VBA_COIL_ROD_NOTES.rfa",
+                    "VBA_COIL_ROD_NOTES_14.rfa",
+                    "VBA_COIL_ROD_NOTES_B.rfa",
+                    "VBA_COIL_ROD_NOTES_C.rfa",
+                    "VBA_COLUMN_ALT_PICKING_DETAILS.rfa",
+                    "VBA_COLUMN_BACKGROUND_HIGH.rfa",
+                    "VBA_COLUMN_BACKGROUND_MEDIUM.rfa",
+                    "VBA_DETAIL_REF.rfa",
+                    "VBA_DOWN_PLATE_NOTES.rfa",
+                    "VBA_DOWN_PLATE_NOTES_SCISSOR.rfa",
+                    "VBA_ELEV_A.rfa",
+                    "VBA_ELEVATION_NOTES.rfa",
+                    "VBA_ELEVATION_NOTES_MIRRORED.rfa",
+                    "VBA_ELEVATION_NOTES_SCREWS.rfa",
+                    "VBA_ELEVATION_NOTES_SCREWS_MIRRORED.rfa",
+                    "VBA_GATES_SQUARING_CORNER.rfa",
+                    "VBA_GATES_SQUARING_CORNER_INV.rfa",
+                    "VBA_GATES_SQUARING_CORNER_SLINGS.rfa",
+                    "VBA_LIFTING_SLING_A.rfa",
+                    "VBA_LIFTING_SLING_B.rfa",
+                    "VBA_LIFTING_SLING_C.rfa",
+                    "VBA_LINE.rfa",
+                    "VBA_LVL.rfa",
+                    "VBA_LVL_BOLT.rfa",
+                    "VBA_LVL_BOLT_HIDDEN.rfa",
+                    "VBA_LVL_FACE.rfa",
+                    "VBA_LVL_SPAX.rfa",
+                    "VBA_NAILING_NOTES_SCISSOR.rfa",
+                    "VBA_NUT_5-8.rfa",
+                    "VBA_PICKING_CORNER.rfa",
+                    "VBA_PLAN_NOTES1.rfa",
+                    "VBA_PLAN_NOTES2.rfa",
+                    "VBA_PLAN_NOTES3.rfa",
+                    "VBA_PLAN_NOTES4.rfa",
+                    "VBA_PLAN_NOTES5.rfa",
+                    "VBA_PLAN_NOTES6.rfa",
+                    "VBA_PLAN_NOTES7.rfa",
+                    "VBA_PLAN_NOTES7_LOOP.rfa",
+                    "VBA_PLAN_NOTES8.rfa",
+                    "VBA_PLAN_NOTES9A.rfa",
+                    "VBA_PLAN_NOTES9B.rfa",
+                    "VBA_PLY.rfa",
+                    "VBA_PLY_SHEET.rfa",
+                    "VBA_PLY_WITH_CHAMFER.rfa",
+                    "VBA_RECTANGLE.rfa",
+                    "VBA_REINFORCING_ANGLE.rfa",
+                    "VBA_SCISSOR_CLAMP_NOTES_FRAME.rfa",
+                    "VBA_SCREW_HEAD.rfa",
+                    "VBA_STUD_HOLDBACK_CALLOUT.rfa",
+                    "VBA_STUD_HOLDBACK_DETAIL.rfa",
+                    "VBA_TOP_SECTION_DETAILS1.rfa"
+                };
+
+                foreach (var family in familyList)
+                {
+                    doc.LoadFamily($"{GlobalNames.WtFamiliesLocationPrefix}{family}", out _);
+                }
+            }
         }
     }
 }
