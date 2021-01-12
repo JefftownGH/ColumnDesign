@@ -19,7 +19,7 @@ namespace UnitTests.Tests
         [Test]
         public void ReadFile()
         {
-            Assert.That(()=>ImportMatrixFunction.ImportMatrix(@$"{GlobalNames.WtFilesLocationPrefix}Columns\clamp_matrix.csv"), Throws.Nothing);
+            Assert.That(()=>ImportMatrixFunction.ImportMatrix(@$"{GlobalNames.FilesLocationPrefix}Columns\clamp_matrix.csv"), Throws.Nothing);
         }
     }
 }

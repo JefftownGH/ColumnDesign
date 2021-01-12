@@ -10,6 +10,7 @@ using ColumnDesign.Annotations;
 using ColumnDesign.Methods;
 using ColumnDesign.UI;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.ConvertNumberToFeetInches;
 using static ColumnDesign.Modules.sUpdatePly_Function;
 using static ColumnDesign.Modules.UpdatePly_Function;
 
@@ -110,6 +111,7 @@ namespace ColumnDesign.ViewModel
                 _boxPlySeams = "";
                 OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(HeightZ));
+                OnPropertyChanged(nameof(SheetName));
                 UpdatePly(_view, this);
             }
         }
@@ -124,6 +126,7 @@ namespace ColumnDesign.ViewModel
                 sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
                 OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SHeightZ));
+                OnPropertyChanged(nameof(SSheetName));
                 sUpdatePly(_view, this);
             }
         }
@@ -312,9 +315,11 @@ namespace ColumnDesign.ViewModel
             {
                 if (WidthX == null) return "";
                 if (LengthY == null) return "";
+                if (HeightZ == null) return "";
                 if (WidthX.Equals("")) return "";
                 if (LengthY.Equals("")) return "";
-                return $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" GATES COLUMN FORM";
+                if (HeightZ.Equals("")) return "";
+                return $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" x {ConvertFtIn(ConvertToNum(HeightZ))} GATES COLUMN FORM";
             }
             set
             {

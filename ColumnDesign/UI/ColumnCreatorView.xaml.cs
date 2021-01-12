@@ -9,6 +9,7 @@ using Autodesk.Revit.UI;
 using ColumnDesign.Methods;
 using ColumnDesign.Modules;
 using ColumnDesign.ViewModel;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace ColumnDesign.UI
 {
@@ -28,6 +29,20 @@ namespace ColumnDesign.UI
             DataContext = _vm;
             InitializeComponent();
             InitializeFields();
+            EventManager.RegisterClassHandler(typeof(TextBox), KeyDownEvent, new KeyEventHandler(TextBox_KeyDown));
+        }
+
+        private static void TextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter & ((TextBox) sender).AcceptsReturn == false) MoveToNextUiElement(e);
+        }
+
+        private static void MoveToNextUiElement(RoutedEventArgs e)
+        {
+            const FocusNavigationDirection focusDirection = FocusNavigationDirection.Next;
+            var request = new TraversalRequest(focusDirection);
+            if (Keyboard.FocusedElement is not UIElement elementWithFocus) return;
+            if (elementWithFocus.MoveFocus(request)) e.Handled = true;
         }
 
         private void InitializeFields()

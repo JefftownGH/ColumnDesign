@@ -63,7 +63,7 @@
             </TabItem.Header>
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
-                    <Button x:Name="DrawGates" DockPanel.Dock="Bottom" Content="Draw Gates!" Height="50" FontSize="28"
+                    <Button x:Name="DrawGates" DockPanel.Dock="Bottom" Content="Create Gates Sheet!" Height="50" FontSize="28"
                             Command="{Binding DrawGatesCommand}">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -113,14 +113,16 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    <StackPanel DockPanel.Dock="Left" Width="225">
+                    <StackPanel DockPanel.Dock="Left" 
+                                Width="225" 
+                                FocusManager.FocusedElement="{Binding ElementName=WidthX}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Foreground="Gray" Width="155" Text="Units in inches or ft'-in" />
                             <TextBlock Text="Window ?" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Width (X)</TextBlock>
-                            <TextBox x:Name="WidthX" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="WidthX" Width="100" TabIndex="0" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="WidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -162,7 +164,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Length (Y)</TextBlock>
-                            <TextBox x:Name="LengthY" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="LengthY" Width="100" TabIndex="1" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="LengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -204,11 +206,11 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Height (Z)</TextBlock>
-                            <TextBox x:Name="HeightZ" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="HeightZ" Width="100" TabIndex="2" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="HeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
-                                            <vm:ValueRangeRule Min="98" Max="240" ValidatesOnTargetUpdated="True" />
+                                            <vm:ValueRangeRule Min="96" Max="240" ValidatesOnTargetUpdated="True" />
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </TextBox.Text>
@@ -216,7 +218,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Quantity</TextBlock>
-                            <TextBox x:Name="Quantity" Width="100">
+                            <TextBox x:Name="Quantity" Width="100" TabIndex="3">
                                 <TextBox.Text>
                                     <Binding Path="Quantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -232,7 +234,7 @@
                             <RadioButton x:Name="Picking" Margin="20,0,0,0" IsChecked="True">Picking</RadioButton>
                         </StackPanel>
                         <TextBlock>Plywood type</TextBlock>
-                        <TextBox x:Name="PlywoodType" Text="{Binding PlywoodType, UpdateSourceTrigger=PropertyChanged}"
+                        <TextBox x:Name="PlywoodType" TabIndex="4" Text="{Binding PlywoodType, UpdateSourceTrigger=PropertyChanged}"
                                  Width="100" HorizontalAlignment="Left" />
                         <TextBlock>Clamp size</TextBlock>
                         <StackPanel>
@@ -250,7 +252,7 @@
                     <StackPanel DockPanel.Dock="Right">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Sheet name</TextBlock>
-                            <TextBox x:Name="SheetName" Width="200"
+                            <TextBox x:Name="SheetName" Width="200" TabIndex="6"
                                      Text="{Binding SheetName, UpdateSourceTrigger=PropertyChanged }" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -325,6 +327,7 @@
                         <TextBox 
                             x:Name="BoxPlySeams" 
                                  DockPanel.Dock="Bottom" 
+                            TabIndex="5"
                             Text="{Binding BoxPlySeams }"
                             TextChanged="BoxPlySeams_OnTextChanged"/>
                         <TextBlock
@@ -436,7 +439,7 @@
             </TabItem.Header>
             <TabItem.Content>
                 <DockPanel LastChildFill="True">
-                    <Button DockPanel.Dock="Bottom" Content="Draw Scissors!" Height="50" FontSize="28"
+                    <Button DockPanel.Dock="Bottom" Content="Create Scissor Clamp Sheet!" Height="50" FontSize="28"
                             x:Name="DrawScissors"
                             Command="{Binding DrawScissorsCommand}">
                         <Button.Style>
@@ -493,7 +496,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Width (X)</TextBlock>
-                            <TextBox x:Name="SWidthX" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="SWidthX" Width="100" TabIndex="0" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="SWidthX" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -505,7 +508,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Length (Y)</TextBlock>
-                            <TextBox x:Name="SLengthY" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="SLengthY" Width="100" TabIndex="1" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="SLengthY" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -517,7 +520,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Height (Z)</TextBlock>
-                            <TextBox x:Name="SHeightZ" Width="100" Style="{StaticResource TextBoxInError}">
+                            <TextBox x:Name="SHeightZ" Width="100" TabIndex="2" Style="{StaticResource TextBoxInError}">
                                 <TextBox.Text>
                                     <Binding Path="SHeightZ" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -529,7 +532,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="60">Quantity</TextBlock>
-                            <TextBox x:Name="SQuantity" Width="100">
+                            <TextBox x:Name="SQuantity" Width="100" TabIndex="3">
                                 <TextBox.Text>
                                     <Binding Path="SQuantity" UpdateSourceTrigger="PropertyChanged">
                                         <Binding.ValidationRules>
@@ -544,7 +547,7 @@
                             <TextBlock x:Name="SMaxHeight" VerticalAlignment="Bottom">N/A</TextBlock>
                         </StackPanel>
                         <TextBlock>Plywood type</TextBlock>
-                        <TextBox x:Name="SPlywoodType" Text="HDO" Width="100" HorizontalAlignment="Left" />
+                        <TextBox x:Name="SPlywoodType" TabIndex="4" Text="HDO" Width="100" HorizontalAlignment="Left" />
                         <TextBlock>Clamp size</TextBlock>
                         <StackPanel>
                             <RadioButton x:Name="Clampsize1">36" Scissor clamp</RadioButton>
@@ -556,7 +559,7 @@
                     <StackPanel DockPanel.Dock="Right">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Width="100">Sheet name</TextBlock>
-                            <TextBox x:Name="SSheetName" Width="200"
+                            <TextBox x:Name="SSheetName" Width="200" TabIndex="6"
                                      Text="{Binding SSheetName, UpdateSourceTrigger=PropertyChanged }" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
@@ -629,6 +632,7 @@
 
                         <TextBox 
                             x:Name="SBoxPlySeams" 
+                            TabIndex="5"
                                  DockPanel.Dock="Bottom" 
                             Text="{Binding SBoxPlySeams }"
                             TextChanged="SBoxPlySeams_OnTextChanged"/>

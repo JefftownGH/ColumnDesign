@@ -34,7 +34,7 @@ namespace ColumnDesign.Modules
                 }
             }
 
-            if (!ui.BoxPlySeams.Text.Equals(""))
+            if (!ui.SBoxPlySeams.Text.Equals(""))
             {
                 goto SkipPlyUpdate;
             }
