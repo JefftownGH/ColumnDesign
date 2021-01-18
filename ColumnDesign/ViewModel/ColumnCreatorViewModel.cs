@@ -319,7 +319,8 @@ namespace ColumnDesign.ViewModel
                 if (WidthX.Equals("")) return "";
                 if (LengthY.Equals("")) return "";
                 if (HeightZ.Equals("")) return "";
-                return $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" x {ConvertFtIn(ConvertToNum(HeightZ))} GATES COLUMN FORM";
+                return
+                    $"{ConvertToNum(WidthX)}\" x {ConvertToNum(LengthY)}\" x {ConvertFtIn(ConvertToNum(HeightZ))} GATES COLUMN FORM";
             }
             set
             {
@@ -334,9 +335,12 @@ namespace ColumnDesign.ViewModel
             {
                 if (SWidthX == null) return "";
                 if (SLengthY == null) return "";
+                if (SHeightZ == null) return "";
                 if (SWidthX.Equals("")) return "";
                 if (SLengthY.Equals("")) return "";
-                return $"{ConvertToNum(SWidthX)}\" x {ConvertToNum(SLengthY)}\" SCISSOR CLAMP COLUMN FAB";
+                if (SHeightZ.Equals("")) return "";
+                return
+                    $"{ConvertToNum(SWidthX)}\" x {ConvertToNum(SLengthY)}\" x {ConvertFtIn(ConvertToNum(SHeightZ))} SCISSOR CLAMP COLUMN FAB";
             }
             set
             {

@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using ColumnDesign.UI;
 using ColumnDesign.ViewModel;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
 using static ColumnDesign.Modules.ConvertNumberToFeetInches;
 using static ColumnDesign.Modules.GetPlySeamsFunction;
 using static ColumnDesign.Modules.ReadSizesFunction;
+using static ColumnDesign.Modules.UpdatePly_Function;
 
 namespace ColumnDesign.Modules
 {
@@ -75,62 +79,54 @@ namespace ColumnDesign.Modules
                 px_x = px_z_max * (x / z) * z / 96;
                 px_y = px_z_max * (y / z) * z / 96;
             }
-
-            double px_width = ui.SSlblAxis.Text switch
+            ui.STreeLines.Children.Clear();
+            ui.STreeLines.RowDefinitions.Clear();
+            ui.STreeLines.RowDefinitions.Add(new RowDefinition());
+            ui.STreeValues.Children.Clear();
+            ui.STreeValues.RowDefinitions.Clear();   
+            var lineStyle = ui.FindResource("TreeLine") as Style;
+            var textStyle = ui.FindResource("TreeTextBlock") as Style;
+            var gcd = MultiGcd(ply_seams);
+            var lineCount = (int) z/ gcd;
+            for (var i = 0; i < lineCount-1; i++)
             {
-                "X" => px_x,
-                "Y" => px_y,
-                _ => throw new ArgumentException("Error: Horizontal dimension not x or y")
-            };
-            //TODO  'Draw "frame" of column: left, right, and top
+                ui.STreeLines.RowDefinitions.Add(new RowDefinition());
+            }
 
-//         'Left
-//         ColumnCreator.s_img_line_1.Left = pt_draw(0) - px_width / 2
-//         ColumnCreator.s_img_line_1.top = pt_draw(1) - px_z_max
-//         ColumnCreator.s_img_line_1.Width = 2
-//         ColumnCreator.s_img_line_1.Height = px_z_max
-//         ColumnCreator.s_img_line_1.Visible = True
-//     
-//         'Right
-//         ColumnCreator.s_img_line_2.Left = pt_draw(0) + px_width / 2
-//         ColumnCreator.s_img_line_2.top = pt_draw(1) - px_z_max
-//         ColumnCreator.s_img_line_2.Width = 2
-//         ColumnCreator.s_img_line_2.Height = px_z_max
-//         ColumnCreator.s_img_line_2.Visible = True
-//     
-//         'Top
-//         ColumnCreator.s_img_line_3.Left = pt_draw(0) - px_width / 2
-//         ColumnCreator.s_img_line_3.top = pt_draw(1) - px_z_max
-//         ColumnCreator.s_img_line_3.Width = px_width
-//         ColumnCreator.s_img_line_3.Height = 2
-//         ColumnCreator.s_img_line_3.Visible = True
-//         
-//         'Draw plywood seams
-//         Dim cumulative_z As Double
-//         For i = 1 To UBound(ply_seams) - 1
-//             Coll(i).Left = pt_draw(0) - px_width / 2
-//             cumulative_z = 0
-//             For j = 1 To i
-//                 cumulative_z = cumulative_z + ply_seams(j)
-//             Next j
-//             Coll(i).top = pt_draw(1) - px_z_max * (cumulative_z / z)
-//             Coll(i).Width = px_width
-//             Coll(i).Height = 2
-//             Coll(i).Visible = True
-//         Next i
-//         
-//         'Dimension plywood seams
-//         For i = 1 To UBound(ply_seams)
-//             Coll(i + 10).Left = pt_draw(0) + px_width / 2 + 10
-//             cumulative_z = 0
-//             For j = 1 To i
-//                 cumulative_z = cumulative_z + ply_seams(j)
-//             Next j
-//             Coll(i + 10).top = pt_draw(1) - px_z_max * ((cumulative_z - ply_seams(i) / 2) / z) - Coll(i + 10).Height / 2 + 2
-//             Coll(i + 10).Caption = ConvertFtIn(ply_seams(i))
-//             Coll(i + 10).Visible = True
-//         Next i
-//     End If
+            for (var i = 0; i < lineCount*2+1; i++)
+            {
+                ui.STreeValues.RowDefinitions.Add(new RowDefinition());
+            }
+
+            var sumPly = 0d;
+            for (var i = 0; i < ply_seams.Length-1; i++)
+            {
+                sumPly += ply_seams[i];
+                var line = new Line
+                {
+                    X1 = 0,
+                    X2 = 1,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Style = lineStyle,
+                };
+                Grid.SetRow(line, ui.STreeLines.RowDefinitions.Count-(int)sumPly/gcd);
+                ui.STreeLines.Children.Add(line);
+            }
+            sumPly = 0d;
+            foreach (var t in ply_seams)
+            {
+                sumPly += t;
+
+                var value = new TextBlock
+                {
+                    Text = ConvertFtIn(t),
+                    Style = textStyle,
+                };
+                Grid.SetRow(value, ui.STreeValues.RowDefinitions.Count-1-(int)sumPly/gcd);
+                ui.STreeValues.RowDefinitions[ui.STreeValues.RowDefinitions.Count - 1 - (int) sumPly / gcd].Height = new GridLength(20);
+                ui.STreeValues.Children.Add(value);
+                sumPly += t;
+            }
         }
 
         public static int sValidatePlySeams(ColumnCreatorView ui, double[] ply_seams, double x, double y,

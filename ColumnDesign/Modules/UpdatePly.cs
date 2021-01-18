@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using ColumnDesign.UI;
 using ColumnDesign.ViewModel;
 using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
@@ -14,7 +17,6 @@ namespace ColumnDesign.Modules
     {
         public static void UpdatePly(ColumnCreatorView ui, ColumnCreatorViewModel vm)
         {
-            if (ui.WindowX.IsEnabled == false) return;
             var x = ConvertToNum(vm.WidthX);
             var y = ConvertToNum(vm.LengthY);
             var z = ConvertToNum(vm.HeightZ);
@@ -63,67 +65,27 @@ namespace ColumnDesign.Modules
             ui.BoxPlySeams.Text = strPlySeams;
 
             SkipPlyUpdate:
-            double[] pt_draw = new double[3];
+            var pt_draw = new double[3];
             pt_draw[0] = 200;
             pt_draw[1] = 216;
             pt_draw[2] = 0;
             const double px_z_max = 200;
-            double px_x = px_z_max * (x / z);
-            double px_y = px_z_max * (y / z);
-            double px_width = vm.SlblAxis switch
+            var px_x = px_z_max * (x / z);
+            var px_y = px_z_max * (y / z);
+            double px_width;
+            switch (vm.SlblAxis)
             {
-                "X" => px_x,
-                "Y" => px_y,
-                _ => throw new ArgumentException("Error: Horizontal dimension not x or y")
-            };
-            //TODO  'Draw "frame" of column: left, right, and top
-            // ColumnCreator.img_line_1.Left = pt_draw(0) - px_width / 2
-            // ColumnCreator.img_line_1.top = pt_draw(1) - px_z_max
-            // ColumnCreator.img_line_1.Width = 2
-            // ColumnCreator.img_line_1.Height = px_z_max
-            // ColumnCreator.img_line_1.Visible = True
-            //
-            // 'Right
-            // ColumnCreator.img_line_2.Left = pt_draw(0) + px_width / 2
-            // ColumnCreator.img_line_2.top = pt_draw(1) - px_z_max
-            // ColumnCreator.img_line_2.Width = 2
-            // ColumnCreator.img_line_2.Height = px_z_max
-            // ColumnCreator.img_line_2.Visible = True
-            //
-            // 'Top
-            // ColumnCreator.img_line_3.Left = pt_draw(0) - px_width / 2
-            // ColumnCreator.img_line_3.top = pt_draw(1) - px_z_max
-            // ColumnCreator.img_line_3.Width = px_width
-            // ColumnCreator.img_line_3.Height = 2
-            // ColumnCreator.img_line_3.Visible = True
-            //
-            // 'Draw plywood seams
-            //     Dim cumulative_z As Double
-            // For i = 1 To UBound(ply_seams) - 1
-            // Coll(i).Left = pt_draw(0) - px_width / 2
-            // cumulative_z = 0
-            // For j = 1 To i
-            //     cumulative_z = cumulative_z + ply_seams(j)
-            // Next j
-            // Coll(i).top = pt_draw(1) - px_z_max * (cumulative_z / z)
-            // Coll(i).Width = px_width
-            // Coll(i).Height = 2
-            // Coll(i).Visible = True
-            // Next i
-            //
-            // 'Dimension plywood seams
-            // For i = 1 To UBound(ply_seams)
-            // Coll(i + 10).Left = pt_draw(0) + px_width / 2 + 10
-            // cumulative_z = 0
-            // For j = 1 To i
-            //     cumulative_z = cumulative_z + ply_seams(j)
-            // Next j
-            // Coll(i + 10).top = pt_draw(1) - px_z_max * ((cumulative_z - ply_seams(i) / 2) / z) - Coll(i + 10).Height / 2 + 2
-            // Coll(i + 10).Caption = ConvertFtIn(ply_seams(i))
-            // Coll(i + 10).Visible = True
-            // Next i
-
-            if (ui.WindowX.IsChecked == true || ui.WindowX.IsChecked == true)
+                case "X":
+                    px_width = px_x;
+                    break;
+                case "Y":
+                    px_width = px_y;
+                    break;
+                default:
+                    throw new ArgumentException("Error: Horizontal dimension not x or y");
+            }
+            
+            if (vm.WindowX || vm.WindowY)
             {
                 if (vm.WinDim1.Equals("Z1"))
                 {
@@ -142,83 +104,77 @@ namespace ColumnDesign.Modules
                     vm.WinDim1 = ConvertFtIn(0);
                 }
             }
+
+            ui.TreeLines.Children.Clear();
+            ui.TreeLines.RowDefinitions.Clear();
+            ui.TreeLines.RowDefinitions.Add(new RowDefinition());
+            ui.TreeValues.Children.Clear();
+            ui.TreeValues.RowDefinitions.Clear();   
+            var lineStyle = ui.FindResource("TreeLine") as Style;
+            var textStyle = ui.FindResource("TreeTextBlock") as Style;
+            var gcd = MultiGcd(ply_seams);
+            var lineCount = (int) z/ gcd;
+            var winHeight = (int) ConvertToNum(vm.WinDim1);
+            if (vm.WindowX || vm.WindowY)
+            {
+                gcd = Gcd(lineCount, winHeight );
+                lineCount = (int) z/ gcd;
+            }
+            for (var i = 0; i < lineCount-1; i++)
+            {
+                ui.TreeLines.RowDefinitions.Add(new RowDefinition());
+            }
+
+            for (var i = 0; i < lineCount*2+1; i++)
+            {
+                ui.TreeValues.RowDefinitions.Add(new RowDefinition());
+            }
+
+            var sumPly = 0d;
+            for (var i = 0; i < ply_seams.Length-1; i++)
+            {
+                sumPly += ply_seams[i];
+                var line = new Line
+                {
+                    X1 = 0,
+                    X2 = 1,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Style = lineStyle,
+                };
+                Grid.SetRow(line, ui.TreeLines.RowDefinitions.Count-(int)sumPly/gcd);
+                ui.TreeLines.Children.Add(line);
+            }
+
+            if (vm.WindowX || vm.WindowY)
+            {
+                var line = new Line
+                {
+                    X1 = 0,
+                    X2 = 1,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Style = lineStyle,
+                    Stroke = new SolidColorBrush(Colors.Blue)
+                };
+                Grid.SetRow(line, winHeight/gcd);
+                ui.TreeLines.Children.Add(line);
+            }
+            sumPly = 0d;
+            foreach (var t in ply_seams)
+            {
+                sumPly += t;
+
+                var value = new TextBlock
+                {
+                    Text = ConvertFtIn(t),
+                    Style = textStyle,
+                };
+                Grid.SetRow(value, ui.TreeValues.RowDefinitions.Count-1-(int)sumPly/gcd);
+                ui.TreeValues.RowDefinitions[ui.TreeValues.RowDefinitions.Count - 1 - (int) sumPly / gcd].Height = new GridLength(20);
+                ui.TreeValues.Children.Add(value);
+                sumPly += t;
+            }
+
         }
-
-        //     'Input source of 0 is for changes from the x, y, and z boxes or from changing the axis
-//     'Input source of 1 is for changes from boxPlySeams
-//     'Input source of 2 is for changes from the window checkboxes or the window position dimensions
-//     'Input source of 3 is for changes from the z box only
-//         
-//         ColumnCreator.img_line_1.Left = pt_draw(0) - px_width / 2
-//         ColumnCreator.img_line_1.top = pt_draw(1) - px_z_max
-//         ColumnCreator.img_line_1.Width = 2
-//         ColumnCreator.img_line_1.Height = px_z_max
-//         ColumnCreator.img_line_1.Visible = True
-//     
-//         'Right
-//         ColumnCreator.img_line_2.Left = pt_draw(0) + px_width / 2
-//         ColumnCreator.img_line_2.top = pt_draw(1) - px_z_max
-//         ColumnCreator.img_line_2.Width = 2
-//         ColumnCreator.img_line_2.Height = px_z_max
-//         ColumnCreator.img_line_2.Visible = True
-//     
-//         'Top
-//         ColumnCreator.img_line_3.Left = pt_draw(0) - px_width / 2
-//         ColumnCreator.img_line_3.top = pt_draw(1) - px_z_max
-//         ColumnCreator.img_line_3.Width = px_width
-//         ColumnCreator.img_line_3.Height = 2
-//         ColumnCreator.img_line_3.Visible = True
-//         
-//         'Draw plywood seams
-//         Dim cumulative_z As Double
-//         For i = 1 To UBound(ply_seams) - 1
-//             Coll(i).Left = pt_draw(0) - px_width / 2
-//             cumulative_z = 0
-//             For j = 1 To i
-//                 cumulative_z = cumulative_z + ply_seams(j)
-//             Next j
-//             Coll(i).top = pt_draw(1) - px_z_max * (cumulative_z / z)
-//             Coll(i).Width = px_width
-//             Coll(i).Height = 2
-//             Coll(i).Visible = True
-//         Next i
-//         
-//         'Dimension plywood seams
-//         For i = 1 To UBound(ply_seams)
-//             Coll(i + 10).Left = pt_draw(0) + px_width / 2 + 10
-//             cumulative_z = 0
-//             For j = 1 To i
-//                 cumulative_z = cumulative_z + ply_seams(j)
-//             Next j
-//             Coll(i + 10).top = pt_draw(1) - px_z_max * ((cumulative_z - ply_seams(i) / 2) / z) - Coll(i + 10).Height / 2 + 2
-//             Coll(i + 10).Caption = ConvertFtIn(ply_seams(i))
-//             Coll(i + 10).Visible = True
-//         Next i
-//         
-//         'Create window seam
-
-//         If ColumnCreator.chkWinX.Value = True Or ColumnCreator.chkWinY.Value = True Then
-//             If InputSource = 0 Or InputSource = 2 Or InputSource = 3 Then
-//                 ColumnCreator.img_line_win.Left = pt_draw(0) - px_width / 2
-//                 ColumnCreator.img_line_win.top = pt_draw(1) - px_z_max + ConvertToNum(ColumnCreator.WinDim1.Value) * px_z_max / z
-//                 ColumnCreator.img_line_win.Width = px_width
-//                 ColumnCreator.img_line_win.Height = 3 'Thicc
-//                 ColumnCreator.WinDim1.Left = pt_draw(0) - px_width / 2 - 40
-//                 ColumnCreator.WinDim1.top = pt_draw(1) - px_z_max + (ConvertToNum(ColumnCreator.WinDim1.Value) * px_z_max / z) / 2 - ColumnCreator.WinDim1.Height / 2
-//                 'Move dimensions into place (lower dim)
-//                 ColumnCreator.WinDim2.Left = pt_draw(0) - px_width / 2 - 40
-//                 ColumnCreator.WinDim2.top = pt_draw(1) - (ConvertToNum(ColumnCreator.WinDim2.Value) * px_z_max / z) / 2 - ColumnCreator.WinDim1.Height / 2
-// UpdatePlyColorCheck:
-//             End If
-//             ColumnCreator.img_line_win.Visible = True
-//             ColumnCreator.WinDim1.Visible = True
-//             ColumnCreator.WinDim2.Visible = True
-//         Else
-//             'Hide window dimensions if no window option is checked
-//             ColumnCreator.WinDim1.Visible = False
-//             ColumnCreator.WinDim2.Visible = False
-//         End If
-// End Function
 
         public static int ValidatePlySeams(ColumnCreatorView ui, double[] ply_seams, double x, double y,
             double z)
@@ -270,6 +226,26 @@ namespace ColumnDesign.Modules
 
             ui.TxtPlyError.Visibility = Visibility.Collapsed;
             return 1;
+        }
+
+        public static int Gcd(int a, int b)
+        {
+            while (b != 0)
+            {
+                var temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
+        }
+
+        public static int MultiGcd(double[] n)
+        {
+            if (n.Length == 0) return 0;
+            int i, gcd = (int)n[0];
+            for (i = 0; i < n.Length - 1; i++)
+                gcd = Gcd(gcd, (int)n[i + 1]);
+            return gcd;
         }
     }
 }

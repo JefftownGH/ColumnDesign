@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -53,12 +54,13 @@ namespace ColumnDesign.UI
             _vm.PlywoodType = "HDO";
             _vm.SlblAxis = "X";
         }
+
         private void Window_OnChecked(object sender, RoutedEventArgs e)
         {
             Picking.IsEnabled = false;
             Regular.IsChecked = true;
         }
-        
+
         private void Window_OnUnchecked(object sender, RoutedEventArgs e)
         {
             Picking.IsEnabled = true;
@@ -83,6 +85,71 @@ namespace ColumnDesign.UI
         private void SBoxPlySeams_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             sUpdatePly_Function.sUpdatePly(this, _vm);
+        }
+
+        private void SaveSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
+        {
+            using var file = new StreamWriter(GlobalNames.ConfigColumnLocation, false);
+            file.WriteLine(SheetName.Text);
+            file.WriteLine(ProjectTitle.Text);
+            file.WriteLine(ProjectAddress.Text);
+            file.WriteLine(Date.Text);
+            file.WriteLine(SheetIssuedFor.Text);
+            file.WriteLine(DrawnBy.Text);
+            file.WriteLine(JobN.Text);
+            file.WriteLine(SheetNumber.Text);
+            file.WriteLine(Suffix.Text);
+            file.WriteLine(Area.Text);
+            file.Close();
+        }
+
+        private void SSaveSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
+        {
+            using var file = new StreamWriter(GlobalNames.ConfigScissorsLocation, false);
+            file.WriteLine(SSheetName.Text);
+            file.WriteLine(SProjectTitle.Text);
+            file.WriteLine(SProjectAddress.Text);
+            file.WriteLine(SDate.Text);
+            file.WriteLine(SSheetIssuedFor.Text);
+            file.WriteLine(SDrawnBy.Text);
+            file.WriteLine(SJobN.Text);
+            file.WriteLine(SSheetNumber.Text);
+            file.WriteLine(SSuffix.Text);
+            file.WriteLine(SArea.Text);
+            file.Close();
+        }
+
+        private void LoadSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
+        {
+            if (!File.Exists(GlobalNames.ConfigColumnLocation)) return;
+            using var file = new StreamReader(GlobalNames.ConfigColumnLocation);
+            _vm.SheetName = file.ReadLine() ?? string.Empty;
+            ProjectTitle.Text = file.ReadLine() ?? string.Empty;
+            ProjectAddress.Text = file.ReadLine() ?? string.Empty;
+            _vm.Date= file.ReadLine() ?? string.Empty;
+            SheetIssuedFor.Text = file.ReadLine() ?? string.Empty;
+            DrawnBy.Text = file.ReadLine() ?? string.Empty;
+            JobN.Text = file.ReadLine() ?? string.Empty;
+            SheetNumber.Text = file.ReadLine() ?? string.Empty;
+            Suffix.Text = file.ReadLine() ?? string.Empty;
+            Area.Text = file.ReadLine() ?? string.Empty;
+            file.Close();
+        }
+        private void SLoadSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
+        {
+            if (!File.Exists(GlobalNames.ConfigScissorsLocation)) return;
+            using var file = new StreamReader(GlobalNames.ConfigScissorsLocation);
+            _vm.SSheetName= file.ReadLine() ?? string.Empty;
+            SProjectTitle.Text = file.ReadLine() ?? string.Empty;
+            SProjectAddress.Text = file.ReadLine() ?? string.Empty;
+            _vm. SDate = file.ReadLine() ?? string.Empty;
+            SSheetIssuedFor.Text = file.ReadLine() ?? string.Empty;
+            SDrawnBy.Text = file.ReadLine() ?? string.Empty;
+            SJobN.Text = file.ReadLine() ?? string.Empty;
+            SSheetNumber.Text = file.ReadLine() ?? string.Empty;
+            SSuffix.Text = file.ReadLine() ?? string.Empty;
+            SArea.Text = file.ReadLine() ?? string.Empty;
+            file.Close();
         }
     }
 }
