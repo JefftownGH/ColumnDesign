@@ -11,6 +11,7 @@ using ColumnDesign.Methods;
 using ColumnDesign.Modules;
 using ColumnDesign.ViewModel;
 using TextBox = System.Windows.Controls.TextBox;
+using Visibility = System.Windows.Visibility;
 
 namespace ColumnDesign.UI
 {
@@ -150,6 +151,27 @@ namespace ColumnDesign.UI
             SSuffix.Text = file.ReadLine() ?? string.Empty;
             SArea.Text = file.ReadLine() ?? string.Empty;
             file.Close();
+        }
+
+        private void WidthX_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            WidthXHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+        }
+        private void LengthY_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            LengthYHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+        }
+        private void HeightZ_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            HeightZHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+        }
+        private void Quantity_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            QuantityHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
         }
     }
 }

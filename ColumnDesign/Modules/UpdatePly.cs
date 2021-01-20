@@ -113,12 +113,12 @@ namespace ColumnDesign.Modules
             var lineStyle = ui.FindResource("TreeLine") as Style;
             var textStyle = ui.FindResource("TreeTextBlock") as Style;
             var gcd = MultiGcd(ply_seams);
-            var lineCount = (int) z/ gcd;
+            var lineCount = (int)Math.Round(z/ gcd);
             var winHeight = (int) ConvertToNum(vm.WinDim1);
             if (vm.WindowX || vm.WindowY)
             {
                 gcd = Gcd(lineCount, winHeight );
-                lineCount = (int) z/ gcd;
+                lineCount = (int) Math.Round(z/ gcd);
             }
             for (var i = 0; i < lineCount-1; i++)
             {
@@ -139,6 +139,7 @@ namespace ColumnDesign.Modules
                     X1 = 0,
                     X2 = 1,
                     VerticalAlignment = VerticalAlignment.Center,
+                    StrokeThickness = 2,
                     Style = lineStyle,
                 };
                 Grid.SetRow(line, ui.TreeLines.RowDefinitions.Count-(int)sumPly/gcd);
@@ -153,7 +154,8 @@ namespace ColumnDesign.Modules
                     X2 = 1,
                     VerticalAlignment = VerticalAlignment.Center,
                     Style = lineStyle,
-                    Stroke = new SolidColorBrush(Colors.Blue)
+                    StrokeThickness = 2,
+                    Stroke = new SolidColorBrush(Colors.Red)
                 };
                 Grid.SetRow(line, winHeight/gcd);
                 ui.TreeLines.Children.Add(line);

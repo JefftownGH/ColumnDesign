@@ -5,15 +5,16 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:vm="clr-namespace:ColumnDesign.ViewModel"
         mc:Ignorable="d"
-        Title="ColumnCreator"
-        Height="580"
-        Width="750"
-        MinHeight="580"
-        MinWidth="750"
+        ResizeMode="NoResize"
+        Title="ColumnCreator (version 5.0)"
+        Height="543"
+        Width="800"
+        MinHeight="543"
+        MinWidth="800"
         WindowStartupLocation="CenterScreen"
         d:DataContext="{d:DesignInstance vm:ColumnCreatorViewModel }"
         Icon="../Resources/Logo.ico"
-        Style="{DynamicResource SettingsWindowStyle}">
+        Style="{DynamicResource SettingsWindowStyle}" MaxWidth="800" MaxHeight="543">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -21,18 +22,22 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <TabControl x:Name="Tabs" BorderThickness="10" BorderBrush="Transparent">
+    <TabControl x:Name="Tabs" BorderBrush="Transparent">
         <TabItem Background="White" BorderBrush="Transparent" Template="{DynamicResource TabItemControlTemplate}">
             <TabItem.Header>
                 <TextBlock Foreground="Black" FontSize="12">Gates Columns</TextBlock>
             </TabItem.Header>
             <TabItem.Content>
-                <DockPanel LastChildFill="True">
-                    <Grid DockPanel.Dock="Bottom">
+                <DockPanel LastChildFill="True" Margin="10,0,10,8">
+                    <Line DockPanel.Dock="Bottom" X1="0" X2="1" Stretch="Fill" Stroke="Red" Margin="0,0,-5,-5"
+                          StrokeThickness="2" />
+                    <Line DockPanel.Dock="Right" Y1="0" Y2="1" Stretch="Fill" Stroke="Red" Margin="0,0,-5,-5"
+                          StrokeThickness="2" />
+                    <Grid DockPanel.Dock="Bottom" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="210" />
+                            <ColumnDefinition Width="232" />
                             <ColumnDefinition />
-                            <ColumnDefinition Width="260" />
+                            <ColumnDefinition Width="270" />
                         </Grid.ColumnDefinitions>
                         <Button x:Name="DrawGates" Content="Create Gates Sheet!" Height="50"
                                 Grid.Column="1"
@@ -41,7 +46,7 @@
                                 Command="{Binding DrawGatesCommand}">
                             <Button.Style>
                                 <Style TargetType="Button">
-                                    <Setter Property="IsEnabled" Value="False" />
+                                    <Setter Property="IsEnabled" Value="True" />
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
@@ -52,26 +57,47 @@
                                                         VerticalAlignment="Center" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
-                                                    <MultiDataTrigger>
-                                                        <MultiDataTrigger.Conditions>
-                                                            <Condition
-                                                                Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
-                                                                Value="False" />
-                                                            <Condition
-                                                                Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
-                                                                Value="False" />
-                                                            <Condition
-                                                                Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
-                                                                Value="False" />
-                                                            <Condition
-                                                                Binding="{Binding Path=(Validation.HasError), ElementName=Quantity}"
-                                                                Value="False" />
-                                                            <Condition
-                                                                Binding="{Binding Path=(Visibility), ElementName=TxtPlyError}"
-                                                                Value="Collapsed" />
-                                                        </MultiDataTrigger.Conditions>
-                                                        <Setter Property="IsEnabled" Value="True" />
-                                                    </MultiDataTrigger>
+                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=WidthX}"
+                                                                 Value="0">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=LengthY}"
+                                                                 Value="0">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=HeightZ}"
+                                                                 Value="0">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=Quantity}"
+                                                                 Value="0">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                        Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                        Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                        Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding (Validation.HasError), ElementName=Quantity}"
+                                                        Value="True">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger
+                                                        Binding="{Binding Visibility, ElementName=TxtPlyError}"
+                                                        Value="Visible">
+                                                        <Setter Property="IsEnabled" Value="False" />
+                                                    </DataTrigger>
                                                     <Trigger Property="IsEnabled" Value="True">
                                                         <Setter TargetName="Border" Property="Background" Value="Red" />
                                                         <Setter Property="Foreground" Value="White" />
@@ -87,56 +113,159 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Image Grid.Column="2" Source="../Resources/Logo_full.jpg" VerticalAlignment="Bottom"
-                               Width="150" HorizontalAlignment="Right" />
+                        <Image Grid.Column="2" Source="../Resources/Logo_full.png" VerticalAlignment="Bottom"
+                               Width="150" HorizontalAlignment="Right" Margin="0,0,10,0" />
                     </Grid>
                     <StackPanel DockPanel.Dock="Left"
-                                Width="210"
-                                FocusManager.FocusedElement="{Binding ElementName=WidthX}" Margin="5,0,0,0">
-                        <Grid>
+                                FocusManager.FocusedElement="{Binding ElementName=WidthX}" Margin="5,0,0,-50">
+                        <Grid Margin="27,0,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="110" />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Foreground="Gray" Width="155"
-                                       Text="Units in inches or ft'-in" HorizontalAlignment="Left" />
-                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Window" VerticalAlignment="Center"
-                                       HorizontalAlignment="Center" />
-                            <Rectangle Grid.Row="1" Grid.Column="0" Stroke="Black" Height="35" Margin="0,0,5,0"
-                                       VerticalAlignment="Bottom" />
-                            <Rectangle Grid.Row="1" Grid.Column="1" Stroke="Black" Height="35" Margin="0,0,5,0"
-                                       VerticalAlignment="Bottom" />
-                            <Rectangle Grid.Row="2" Grid.Column="0" Stroke="Black" Height="35" Margin="0,0,5,0"
-                                       VerticalAlignment="Bottom" />
-                            <Rectangle Grid.Row="2" Grid.Column="1" Stroke="Black" Height="35" Margin="0,0,5,0"
-                                       VerticalAlignment="Bottom" />
-                            <StackPanel Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left"
-                                        VerticalAlignment="Center">
-
-                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0">Width (X)</TextBlock>
-                                <TextBox x:Name="WidthX" Width="65" TabIndex="0"
+                                       Text="Units in inches or ft'-in" HorizontalAlignment="Left" FontSize="12"
+                                       Margin="0,20,5,8" Padding="0" VerticalAlignment="Bottom" />
+                            <Rectangle Grid.Row="1" Grid.Column="0" Height="35" Width="95"
+                                       Margin="0,0,0,9"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="Black" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                         Value="True">
+                                                <Setter Property="Stroke" Value="Red" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <Rectangle Grid.Row="1" Grid.Column="0" Height="33" Width="34" Margin="0,0,16,10"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Right" Fill="#C4C4C4" />
+                            <Rectangle Grid.Row="1" Grid.Column="1" Height="35" Width="95"
+                                       Margin="0,0,0,9"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="Black" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                         Value="True">
+                                                <Setter Property="Stroke" Value="Red" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <Rectangle Grid.Row="1" Grid.Column="1" Height="33" Width="34" Margin="0,0,1,10"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Right" Fill="#C4C4C4" />
+                            <Rectangle Grid.Row="2" Grid.Column="0" Height="35" Width="95"
+                                       Margin="0,0,0,9"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="Black" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                         Value="True">
+                                                <Setter Property="Stroke" Value="Red" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <Rectangle Grid.Row="2" Grid.Column="1" Height="35" Width="95"
+                                       Margin="0,0,0,9"
+                                       VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Stroke" Value="Black" />
+                                        <Style.Triggers>
+                                            <DataTrigger
+                                                Binding="{Binding (Validation.HasError), ElementName=Quantity}"
+                                                Value="True">
+                                                <Setter Property="Stroke" Value="Red" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                            <TextBlock x:Name="WidthXHint" MaxWidth="55" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left"                                         
+                                         Margin="5,0" Opacity="0.3"
+                                         Width="55" Padding="5,0,2,0" FontSize="12">12" - 48"</TextBlock>
+                            <StackPanel Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,0,9">
+                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0,5,2"
+                                           Text="Width (X)" FontSize="10" Padding="2,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Black" />
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                    Value="True">
+                                                    <Setter Property="Foreground" Value="Red" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="WidthX" MaxWidth="55" TabIndex="0" 
                                          Style="{StaticResource TextBoxInError}" BorderBrush="Transparent"
-                                         Margin="5,0,5,5">
-                                    <TextBox.Text>
-                                        <Binding Path="WidthX" UpdateSourceTrigger="PropertyChanged">
-                                            <Binding.ValidationRules>
-                                                <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True" />
-                                            </Binding.ValidationRules>
-                                        </Binding>
-                                    </TextBox.Text>
-                                </TextBox>
+                                         Margin="5,0,5,5" Template="{DynamicResource TextBoxControlTemplate}"
+                                         Width="55" TextChanged="WidthX_OnTextChanged" Background="Transparent">
+                                    <Binding Path="WidthX" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <vm:ValueRangeRule Min="12" Max="48" ValidatesOnTargetUpdated="True" />
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                    
+                                </TextBox>                                
                             </StackPanel>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Left" Padding="0" Margin="5,0,0,0" FontSize="7"
+                                       Foreground="Red" Text="Out of range">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock x:Name="LengthYHint" MaxWidth="55" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"                                         
+                                         Margin="5,0" Opacity="0.3"
+                                         Width="55" Padding="5,0,2,0" FontSize="12">12" - 48"</TextBlock>
                             <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left">
-                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0">Length (Y)</TextBlock>
-                                <TextBox x:Name="LengthY" Width="65" TabIndex="1"
+                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0,5,2"
+                                           Text="Length (Y)" FontSize="10" Padding="2,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Black" />
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                    Value="True">
+                                                    <Setter Property="Foreground" Value="Red" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="LengthY" TabIndex="1" Background="Transparent"
                                          Style="{StaticResource TextBoxInError}" Margin="5,0,5,5"
-                                         BorderBrush="Transparent">
+                                         BorderBrush="Transparent" Template="{DynamicResource TextBoxControlTemplate}"
+                                         MaxWidth="55" Width="55" TextChanged="LengthY_OnTextChanged">
                                     <TextBox.Text>
                                         <Binding Path="LengthY" UpdateSourceTrigger="PropertyChanged">
                                             <Binding.ValidationRules>
@@ -146,42 +275,83 @@
                                     </TextBox.Text>
                                 </TextBox>
                             </StackPanel>
-
-                            <CheckBox Grid.Row="1" Grid.Column="2" x:Name="WindowX"
+                           
+                            <TextBlock Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Left" Padding="0" Margin="5,0,0,0" FontSize="7"
+                                       Foreground="Red" Text="Out of range">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <CheckBox Grid.Row="1" Grid.Column="0" x:Name="WindowX"
                                       IsChecked="{Binding WindowX}"
                                       Checked="Window_OnChecked"
                                       Unchecked="Window_OnUnchecked"
-                                      Click="Window_Click" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                      Click="Window_Click" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      Margin="0,0,25,0" BorderBrush="Black"
+                                      Template="{DynamicResource CheckBoxControlTemplate}">
                                 <CheckBox.Style>
                                     <Style TargetType="CheckBox">
-                                        <Setter Property="IsEnabled" Value="False" />
+                                        <Setter Property="IsEnabled" Value="True" />
                                         <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
-                                                        Value="False" />
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="IsEnabled" Value="True" />
-                                            </MultiDataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=WidthX}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=LengthY}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=HeightZ}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </CheckBox.Style>
                             </CheckBox>
-                            <StackPanel Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left">
-                                <TextBlock Background="White" Margin="5,0" HorizontalAlignment="Left">Height (Z)</TextBlock>
-                                <TextBox x:Name="HeightZ" Width="65" TabIndex="2"
-                                         Style="{StaticResource TextBoxInError}" Margin="5,0,5,5"
-                                         BorderBrush="Transparent">
+                            <TextBlock x:Name="HeightZHint" MaxWidth="55" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left"                                         
+                                         Margin="5,0" Opacity="0.3"
+                                         Width="55" Padding="5,0,2,0" FontSize="12">96" - 240"</TextBlock>
+                            <StackPanel Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,0,9">
+                                <TextBlock Background="White" HorizontalAlignment="Left" Text="Height (Z)"
+                                           Margin="5,0,5,2" Padding="2,0" FontSize="10">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Black" />
+                                            <Style.Triggers>
+
+                                                <DataTrigger
+                                                    Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                    Value="True">
+                                                    <Setter Property="Foreground" Value="Red" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="HeightZ" TabIndex="2" Background="Transparent"
+                                         Style="{StaticResource TextBoxInError}" BorderBrush="Transparent"
+                                         Margin="5,0,5,5" Template="{DynamicResource TextBoxControlTemplate}"
+                                         MaxWidth="85" Width="85" TextChanged="HeightZ_OnTextChanged">
                                     <TextBox.Text>
                                         <Binding Path="HeightZ" UpdateSourceTrigger="PropertyChanged">
                                             <Binding.ValidationRules>
@@ -191,11 +361,45 @@
                                     </TextBox.Text>
                                 </TextBox>
                             </StackPanel>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Left" Padding="0" Margin="5,0,0,0" FontSize="7"
+                                       Foreground="Red" Text="Out of range">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                         Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock x:Name="QuantityHint" MaxWidth="55" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left"                                         
+                                         Margin="5,0" Opacity="0.3"
+                                         Width="55" Padding="5,0,2,0" FontSize="12">1 ... ∞</TextBlock>
                             <StackPanel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left">
-                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0">Quantity</TextBlock>
-                                <TextBox x:Name="Quantity" Width="65" TabIndex="3"
-                                         Style="{StaticResource TextBoxInError}" Margin="5,0,5,5"
-                                         BorderBrush="Transparent">
+                                <TextBlock Background="White" HorizontalAlignment="Left" Margin="5,0,5,2" Padding="2,0"
+                                           FontSize="10" Text="Quantity">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="Black" />
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding (Validation.HasError), ElementName=Quantity}"
+                                                    Value="True">
+                                                    <Setter Property="Foreground" Value="Red" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBox x:Name="Quantity" TabIndex="3" Background="Transparent"
+                                         Style="{StaticResource TextBoxInError}" BorderBrush="Transparent"
+                                         Margin="5,0,5,5" Template="{DynamicResource TextBoxControlTemplate}"
+                                         MaxWidth="85" Width="85" TextChanged="Quantity_OnTextChanged">
                                     <TextBox.Text>
                                         <Binding Path="Quantity" UpdateSourceTrigger="PropertyChanged">
                                             <Binding.ValidationRules>
@@ -206,52 +410,91 @@
                                     </TextBox.Text>
                                 </TextBox>
                             </StackPanel>
-                            <CheckBox Grid.Row="2" Grid.Column="2" x:Name="WindowY"
+                           
+                            <TextBlock Grid.Row="2" Grid.Column="1" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Left" Padding="0" Margin="5,0,0,0" FontSize="7"
+                                       Foreground="Red" Text="Out of range">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                        <Style.Triggers>
+
+                                            <DataTrigger
+                                                Binding="{Binding (Validation.HasError), ElementName=Quantity}"
+                                                Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Right" FontSize="6" Margin="0,0,22,0" Padding="0,0,0,10"
+                                       Foreground="Black">
+                                Window
+                            </TextBlock>
+                            <TextBlock Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom"
+                                       HorizontalAlignment="Right" FontSize="6" Margin="0,0,7,0" Padding="0,0,0,10"
+                                       Foreground="Black">
+                                Window
+                            </TextBlock>
+                            <CheckBox Grid.Row="1" Grid.Column="1" x:Name="WindowY"
                                       IsChecked="{Binding WindowY}"
                                       Checked="Window_OnChecked"
                                       Unchecked="Window_OnUnchecked"
-                                      Click="Window_Click" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                      BorderBrush="Black">
+                                      Click="Window_Click" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      Margin="0,0,10,0" BorderBrush="Black"
+                                      Template="{DynamicResource CheckBoxControlTemplate}">
                                 <CheckBox.Style>
                                     <Style TargetType="CheckBox">
-                                        <Setter Property="IsEnabled" Value="False" />
+                                        <Setter Property="IsEnabled" Value="True" />
                                         <Style.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
-                                                        Value="False" />
-                                                    <Condition
-                                                        Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
-                                                        Value="False" />
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="IsEnabled" Value="True" />
-                                            </MultiDataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=WidthX}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=LengthY}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=HeightZ}" Value="0">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                         Value="True">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </CheckBox.Style>
                             </CheckBox>
                         </Grid>
-                        <Grid Width="160" HorizontalAlignment="Left">
+                        <Grid Width="160" HorizontalAlignment="Left" Margin="27,9,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="32"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="38"
                                        Margin="0,0,5,0" VerticalAlignment="Bottom" />
                             <TextBlock Grid.Row="0" Background="White" HorizontalAlignment="Left" Margin="5,5,5,0">Squaring Corners</TextBlock>
-                            <StackPanel Orientation="Horizontal" Grid.Row="1">
-                                <RadioButton x:Name="Regular" BorderBrush="Black">Regular</RadioButton>
-                                <RadioButton x:Name="Picking" Margin="20,0,0,0" IsChecked="True" BorderBrush="Black">Picking</RadioButton>
+                            <StackPanel Orientation="Horizontal" Grid.Row="1" Height="30">
+                                <RadioButton x:Name="Regular" Background="White"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    Regular
+                                </RadioButton>
+                                <RadioButton x:Name="Picking" Margin="20,0,0,0" IsChecked="True"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    Picking
+                                </RadioButton>
                             </StackPanel>
                         </Grid>
-                        <Grid Width="160" HorizontalAlignment="Left">
+                        <Grid Width="160" HorizontalAlignment="Left" Margin="27,14,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
@@ -263,7 +506,7 @@
                                      Text="{Binding PlywoodType, UpdateSourceTrigger=PropertyChanged}"
                                      HorizontalAlignment="Left" BorderBrush="Transparent" Margin="5,0,5,5" Width="145" />
                         </Grid>
-                        <Grid HorizontalAlignment="Left" Width="160">
+                        <Grid HorizontalAlignment="Left" Width="160" Margin="27,15,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
@@ -272,10 +515,22 @@
                                        Margin="0,0,5,0" VerticalAlignment="Bottom" />
                             <TextBlock Grid.Row="0" HorizontalAlignment="Left" Background="White" Margin="5,5,5,0">Clamp size</TextBlock>
                             <StackPanel Grid.Row="1">
-                                <RadioButton x:Name="RbColumn824" BorderBrush="Black">8-24 Gates</RadioButton>
-                                <RadioButton x:Name="RbColumn2436" BorderBrush="Black">24-36 Gates</RadioButton>
-                                <RadioButton x:Name="RbColumn3648" BorderBrush="Black">36-48 Gates</RadioButton>
-                                <RadioButton x:Name="RbColumnCustom" IsChecked="True" BorderBrush="Black">Choose by column size</RadioButton>
+                                <RadioButton x:Name="RbColumn824" BorderBrush="Black"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    8-24 Gates
+                                </RadioButton>
+                                <RadioButton x:Name="RbColumn2436" BorderBrush="Black"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    24-36 Gates
+                                </RadioButton>
+                                <RadioButton x:Name="RbColumn3648" BorderBrush="Black"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    36-48 Gates
+                                </RadioButton>
+                                <RadioButton x:Name="RbColumnCustom" IsChecked="True" BorderBrush="Black"
+                                             Template="{DynamicResource RadioButtonControlTemplate}">
+                                    Choose by column size
+                                </RadioButton>
                             </StackPanel>
                         </Grid>
 
@@ -284,73 +539,90 @@
                             FontSize="12"
                             Visibility="{Binding PlywoodType, Converter={vm:CheckPlywoodVisibilityConverter}}"
                             Text="Check number of uses if not&#x0a;using HDO plywood!" HorizontalAlignment="Left"
-                            Foreground="Red" Margin="0,5,5,5" />
+                            Foreground="Red" Margin="27,5,5,5" />
                     </StackPanel>
-                    <StackPanel DockPanel.Dock="Right">
+                    <StackPanel DockPanel.Dock="Right" Margin="0,10,10,0">
                         <TextBlock HorizontalAlignment="Left" Foreground="Black" VerticalAlignment="Bottom"
                                    FontSize="12"
-                                   Padding="2,2,2,0" Margin="5,5,5,0">
+                                   Padding="2,2,2,0" Margin="5,8,5,0">
                             Sheet fields
                         </TextBlock>
                         <Line Height="3" Fill="Red" Stroke="Red" HorizontalAlignment="Left" Width="67" Margin="5,0,0,0"
                               X2="67" VerticalAlignment="Top" />
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Sheet name</TextBlock>
-                            <TextBox Grid.Row="1" x:Name="SheetName" Width="250" TabIndex="6" Margin="5,0,5,5"
-                                     Text="{Binding SheetName, UpdateSourceTrigger=PropertyChanged }" Padding="2,0"  IsReadOnly="True"/>
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                       Padding="2,0">
+                                Sheet name
+                            </TextBlock>
+                            <TextBox Grid.Row="1" x:Name="SheetName" Width="250" TabIndex="6" Margin="5,0,5,2"
+                                     Padding="2,0"
+                                     Text="{Binding SheetName, UpdateSourceTrigger=PropertyChanged }"
+                                     IsReadOnly="True" />
                         </Grid>
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Project title</TextBlock>
-                            <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="ProjectTitle" Width="250" Padding="2,0"
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                       Padding="2,0">
+                                Project title
+                            </TextBlock>
+                            <TextBox Grid.Row="1" x:Name="ProjectTitle" Width="250" Margin="5,0,5,2" Padding="2,0"
                                      TabIndex="7">
                                 Project title
                             </TextBox>
                         </Grid>
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Project address</TextBlock>
-                            <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="ProjectAddress" Width="250" Padding="2,0"
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                       Padding="2,0">
+                                Project address
+                            </TextBlock>
+                            <TextBox Grid.Row="1" x:Name="ProjectAddress" Width="250" Margin="5,0,5,2" Padding="2,0"
                                      TabIndex="8">
                                 Project address
                             </TextBox>
                         </Grid>
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Date</TextBlock>
-                            <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="Date" Width="250" TabIndex="9"
-                                     Text="{Binding Date, UpdateSourceTrigger=PropertyChanged}" Padding="2,0" />
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,-2,5,0" Background="White"
+                                       Padding="2,0">
+                                Date
+                            </TextBlock>
+                            <TextBox Grid.Row="1" x:Name="Date" Width="250" TabIndex="9" Margin="5,0,5,2" Padding="2,0"
+                                     Text="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
                         </Grid>
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Sheet issued for...</TextBlock>
-                            <ComboBox x:Name="SheetIssuedFor" Grid.Row="1" Width="250" Padding="2,0" Margin="5,0,5,5"
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,-2,5,0" Background="White"
+                                       Padding="2,0">
+                                Sheet issued for...
+                            </TextBlock>
+                            <ComboBox x:Name="SheetIssuedFor" Grid.Row="1" Width="250" Margin="5,0,5,2" Padding="2,0"
                                       Background="White" BorderThickness="0" Height="16.5">
                                 <TextBlock Margin="0" Foreground="Black">PRELIMINARY</TextBlock>
                                 <TextBlock Margin="0" Foreground="Black">SUBMITTAL REVIEW</TextBlock>
@@ -359,15 +631,18 @@
                             </ComboBox>
                         </Grid>
 
-                        <Grid HorizontalAlignment="Left">
+                        <Grid HorizontalAlignment="Left" Margin="0,5,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                            <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                        VerticalAlignment="Bottom" />
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Drawn by</TextBlock>
-                            <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="DrawnBy" Width="250" Padding="2,0"
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,-2,5,0" Background="White"
+                                       Padding="2,0">
+                                Drawn by
+                            </TextBlock>
+                            <TextBox Grid.Row="1" x:Name="DrawnBy" Width="250" Margin="5,0,5,2" Padding="2,0"
                                      TabIndex="10">
                                 MCC
                             </TextBox>
@@ -381,54 +656,67 @@
                                 <ColumnDefinition />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
-                            <Grid HorizontalAlignment="Left" Grid.Column="0" Grid.Row="0" Margin="0,0,5,0">
+                            <Grid HorizontalAlignment="Left" Grid.Column="0" Grid.Row="0" Margin="0,5,5,0" Width="120">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                            VerticalAlignment="Bottom" />
-                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Job #</TextBlock>
-                                <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="JobN" Width="120" Padding="2,0"
+                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                           Padding="2,0">
+                                    Job #
+                                </TextBlock>
+                                <TextBox Grid.Row="1" Margin="5,0,5,2" x:Name="JobN" Width="120" Padding="2,0"
                                          TabIndex="11">
                                     999
                                 </TextBox>
                             </Grid>
-                            <Grid HorizontalAlignment="Left" Grid.Column="1" Grid.Row="0">
+                            <Grid HorizontalAlignment="Right" Grid.Column="1" Grid.Row="0" Margin="0,5,0,0" Width="120">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                            VerticalAlignment="Bottom" />
-                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Sheet</TextBlock>
-                                <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="SheetNumber" Width="115" Padding="2,0"
+                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                           Padding="2,0">
+                                    Sheet
+                                </TextBlock>
+                                <TextBox Grid.Row="1" Margin="5,0,5,2" x:Name="SheetNumber" Width="115" Padding="2,0"
                                          TabIndex="12">
                                     1.0.0
                                 </TextBox>
                             </Grid>
-                            <Grid HorizontalAlignment="Left" Grid.Column="0" Grid.Row="1">
+                            <Grid HorizontalAlignment="Left" Grid.Column="0" Grid.Row="1" Margin="0,5,0,0" Width="120">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                            VerticalAlignment="Bottom" />
-                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Suffix</TextBlock>
-                                <TextBox Grid.Row="1" Margin="5,0,5,5" x:Name="Suffix" Width="120" Padding="2,0"
+                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                           Padding="2,0">
+                                    Suffix
+                                </TextBlock>
+                                <TextBox Grid.Row="1" Margin="5,0,5,2" x:Name="Suffix" Width="120" Padding="2,0"
                                          TabIndex="13">
                                     A
                                 </TextBox>
                             </Grid>
-                            <Grid HorizontalAlignment="Left" Grid.Column="1" Grid.Row="1">
+                            <Grid HorizontalAlignment="Right" Grid.Column="1" Grid.Row="1" Margin="0,6,0,0" Width="120">
                                 <Grid.RowDefinitions>
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
+                                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="25"
                                            VerticalAlignment="Bottom" />
-                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">McClone Area</TextBlock>
-                                <ComboBox x:Name="Area" Grid.Row="1" Margin="5,0,5,5" Width="115" SelectedIndex="2" Padding="2,0"
+                                <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,0" Background="White"
+                                           Padding="2,0">
+                                    McClone Area
+                                </TextBlock>
+                                <ComboBox x:Name="Area" Grid.Row="1" Margin="5,0,5,2" Width="115" SelectedIndex="2"
+                                          Padding="2,0"
                                           Background="White" BorderThickness="0">
                                     <TextBlock Margin="0" Foreground="Black">CO</TextBlock>
                                     <TextBlock Margin="0" Foreground="Black">HI</TextBlock>
@@ -449,12 +737,14 @@
                                 Grid.Column="0"
                                 Foreground="Red"
                                 Width="80"
-                                Height="30"
-                                BorderBrush="Black"
+                                Height="20"
+                                BorderBrush="Red"
                                 Background="White"
-                                Click="SaveSettings_OnMouseDown">
+                                Click="SaveSettings_OnMouseDown" Padding="0">
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="../Resources/Save.png" Height="15" />
+                                    <Image Source="../Resources/Save.png"
+                                           Height="10
+                                           " OpacityMask="Black" />
                                     <TextBlock Foreground="Red">Save</TextBlock>
                                 </StackPanel>
                             </Button>
@@ -462,12 +752,12 @@
                             <Button
                                 Grid.Column="1"
                                 Width="80"
-                                Height="30"
-                                BorderBrush="Black"
+                                Height="20"
+                                BorderBrush="Red"
                                 Background="White"
-                                Click="LoadSettings_OnMouseDown">
+                                Click="LoadSettings_OnMouseDown" Padding="0">
                                 <StackPanel Orientation="Horizontal">
-                                    <Image Source="../Resources/Load.png" Height="15" />
+                                    <Image Source="../Resources/Load.png" Height="10" />
                                     <TextBlock Foreground="Red">Load</TextBlock>
                                 </StackPanel>
                             </Button>
@@ -480,125 +770,121 @@
                         DockPanel.Dock="Bottom"
                         TabIndex="5"
                         Text="{Binding BoxPlySeams }"
-                        TextChanged="BoxPlySeams_OnTextChanged" BorderBrush="Black" />
+                        TextChanged="BoxPlySeams_OnTextChanged" BorderBrush="Black" Margin="5,5,5,20" />
                     <TextBlock
                         DockPanel.Dock="Bottom"
                         FontSize="12"
                         x:Name="TxtPlyError"
                         Visibility="Collapsed"
                         Text="Error" HorizontalAlignment="Left"
-                        Foreground="Red" />
+                        Foreground="Red" Margin="20,5,5,5" />
                     <DockPanel x:Name="PlyLinesPanel" LastChildFill="True">
                         <DockPanel.Style>
                             <Style TargetType="DockPanel">
-                                <Setter Property="Visibility" Value="Hidden" />
+                                <Setter Property="Visibility" Value="Visible" />
                                 <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition
-                                                Binding="{Binding Path=(Validation.HasError), ElementName=WidthX}"
-                                                Value="False" />
-                                            <Condition
-                                                Binding="{Binding Path=(Validation.HasError),  ElementName=LengthY}"
-                                                Value="False" />
-                                            <Condition
-                                                Binding="{Binding Path=(Validation.HasError),  ElementName=HeightZ}"
-                                                Value="False" />
-                                            <Condition
-                                                Binding="{Binding Path=(Validation.HasError),  ElementName=Quantity}"
-                                                Value="False" />
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </MultiDataTrigger>
+                                    <DataTrigger Binding="{Binding Text.Length, ElementName=WidthX}" Value="0">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Text.Length, ElementName=LengthY}" Value="0">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Text.Length, ElementName=HeightZ}" Value="0">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding (Validation.HasError), ElementName=WidthX}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding (Validation.HasError), ElementName=LengthY}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding (Validation.HasError), ElementName=HeightZ}"
+                                                 Value="True">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </DockPanel.Style>
-                        
-                        <Grid  x:Name="GridWinDim" DockPanel.Dock="Left" Margin="0,10">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <Grid.Visibility>
-                                <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
-                                    <Binding Path="WindowX" />
-                                    <Binding Path="WindowY" />
-                                </MultiBinding>
-                            </Grid.Visibility>
-                            <TextBlock
-                                Grid.Row="1"
-                                x:Name="WinDim1"
-                                FontSize="12"
-                                Foreground="Blue"
-                                Text="{Binding WinDim1, UpdateSourceTrigger=PropertyChanged}"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Bottom" 
-                                Margin="0" />
-                            <TextBlock
-                                Grid.Row="5"
-                                x:Name="WinDim2"
-                                FontSize="12"
-                                Foreground="Blue"
-                                Text="{Binding WinDim2, UpdateSourceTrigger=PropertyChanged}"
-                                HorizontalAlignment="Left" 
-                                VerticalAlignment="Bottom"
-                                Margin="0" />
-                        </Grid>
-                        <Grid x:Name="TreeValues" DockPanel.Dock="Right" Margin="0,10,20,10">
-                        </Grid>
-                        <DockPanel
-                            Margin="10"
-                            LastChildFill="True">
-                            <Grid
-                                DockPanel.Dock="Left">
-                                <Line Style="{StaticResource TreeLine}" X1="0" X2="1" Margin="-1,0,-1.4,0"
-                                      VerticalAlignment="Bottom" />
-                                <Grid Margin="35,0,35,0">
-                                    <Grid>
-                                        <Line Grid.Row="0" Style="{StaticResource TreeLine}"
-                                              Y1="0" Y2="1" HorizontalAlignment="Left"
-                                              VerticalAlignment="Bottom" />
-                                        <Line Grid.Row="0" Style="{StaticResource TreeLine}"
-                                              Y1="0" Y2="1" HorizontalAlignment="Right" />
-                                        <Line Grid.Row="0" Style="{StaticResource TreeLine}" X1="0"
-                                              X2="1" VerticalAlignment="Top" />
-                                    </Grid>
-                                    <Grid x:Name="TreeLines">
-                                    </Grid>
+                        <Grid
+                            Margin="20,10,19,0">
+                            <Line Style="{StaticResource TreeLine}" X1="0" X2="1"
+                                  VerticalAlignment="Bottom" />
+                            <Grid x:Name="GridWinDim" HorizontalAlignment="Left" Margin="0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+                                <Grid.Visibility>
+                                    <MultiBinding Converter="{vm:WinDimSeamsVisibilityConverter}">
+                                        <Binding Path="WindowX" />
+                                        <Binding Path="WindowY" />
+                                    </MultiBinding>
+                                </Grid.Visibility>
+                                <TextBlock
+                                    Grid.Row="1"
+                                    x:Name="WinDim1"
+                                    FontSize="12"
+                                    Foreground="Red"
+                                    Text="{Binding WinDim1, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0" />
+                                <TextBlock
+                                    Grid.Row="5"
+                                    x:Name="WinDim2"
+                                    FontSize="12"
+                                    Foreground="Red"
+                                    Text="{Binding WinDim2, UpdateSourceTrigger=PropertyChanged}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Bottom"
+                                    Margin="0" />
+                            </Grid>
+                            <Grid x:Name="TreeValues" HorizontalAlignment="Right" Margin="0" />
+                            <Grid Margin="70,0">
+                                <Grid>
+                                    <Line Grid.Row="0" Style="{StaticResource TreeLine}"
+                                          Y1="0" Y2="1" HorizontalAlignment="Left"
+                                          VerticalAlignment="Bottom" />
+                                    <Line Grid.Row="0" Style="{StaticResource TreeLine}"
+                                          Y1="0" Y2="1" HorizontalAlignment="Right" />
+                                    <Line Grid.Row="0" Style="{StaticResource TreeLine}" X1="0"
+                                          X2="1" VerticalAlignment="Top" />
                                 </Grid>
-                               
-                                <Grid
-                                    x:Name="GridAxis"
-                                    DockPanel.Dock="Bottom"
-                                    Margin="0,0,0,10"
-                                    MouseLeftButtonDown="GridAxis_OnMouseLeftButtonDown" VerticalAlignment="Bottom"
-                                    HorizontalAlignment="Left">
-                                    <Line Y2="30" Stroke="Black" />
-                                    <Line X2="30" Stroke="Black" VerticalAlignment="Bottom" />
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        FontSize="12"
-                                        VerticalAlignment="Top"
-                                        Margin="3,0,0,0"
-                                        Text="Z"
-                                        Padding="0" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        VerticalAlignment="Bottom"
-                                        HorizontalAlignment="Right"
-                                        Margin="0,0,0,2"
-                                        Text="{Binding SlblAxis}" Padding="0" />
-                                </Grid>
+                                <Grid x:Name="TreeLines" />
                             </Grid>
 
-                        </DockPanel>
+                            <Grid
+                                x:Name="GridAxis"
+                                Margin="0,0,0,10"
+                                MouseLeftButtonDown="GridAxis_OnMouseLeftButtonDown" VerticalAlignment="Bottom"
+                                HorizontalAlignment="Left">
+                                <Line Y2="30" Stroke="Gray" />
+                                <Line X2="30" Stroke="Gray" VerticalAlignment="Bottom" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    FontSize="12"
+                                    VerticalAlignment="Top"
+                                    Margin="3,0,0,0"
+                                    Text="Z"
+                                    Padding="0" Foreground="Gray" />
+                                <TextBlock
+                                    FontSize="12"
+                                    VerticalAlignment="Bottom"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,0,2"
+                                    Foreground="Gray"
+                                    Text="{Binding SlblAxis}" Padding="0" />
+                            </Grid>
+                        </Grid>
                     </DockPanel>
                 </DockPanel>
             </TabItem.Content>
@@ -670,7 +956,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Image Grid.Column="2" Source="../Resources/Logo_full.jpg" VerticalAlignment="Bottom"
+                        <Image Grid.Column="2" Source="../Resources/Logo_full.png" VerticalAlignment="Bottom"
                                Width="150" HorizontalAlignment="Right" />
                     </Grid>
                     <StackPanel DockPanel.Dock="Left" Width="210"
@@ -803,7 +1089,8 @@
                                        VerticalAlignment="Bottom" />
                             <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">Sheet name</TextBlock>
                             <TextBox Grid.Row="1" x:Name="SSheetName" Width="250" TabIndex="6" Margin="5,0,5,5"
-                                     Text="{Binding SSheetName, UpdateSourceTrigger=PropertyChanged }" Padding="2,0" IsReadOnly="True"/>
+                                     Text="{Binding SSheetName, UpdateSourceTrigger=PropertyChanged }" Padding="2,0"
+                                     IsReadOnly="True" />
                         </Grid>
                         <Grid HorizontalAlignment="Left">
                             <Grid.RowDefinitions>
@@ -928,7 +1215,8 @@
                                 <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Stroke="Black" Height="30"
                                            VerticalAlignment="Bottom" />
                                 <TextBlock Grid.Row="0" HorizontalAlignment="Left" Margin="5,5,5,0" Background="White">McClone Area</TextBlock>
-                                <ComboBox x:Name="SArea" Grid.Row="1" Width="115" SelectedIndex="2" Padding="2,0" Margin="5,0,5,5"
+                                <ComboBox x:Name="SArea" Grid.Row="1" Width="115" SelectedIndex="2" Padding="2,0"
+                                          Margin="5,0,5,5"
                                           Background="White" BorderThickness="0">
                                     <TextBlock Margin="0" Foreground="Black">CO</TextBlock>
                                     <TextBlock Margin="0" Foreground="Black">HI</TextBlock>
@@ -988,7 +1276,7 @@
                         Visibility="Collapsed"
                         Text="Error" HorizontalAlignment="Left"
                         Foreground="Red" />
-                                       <DockPanel x:Name="SPlyLinesPanel" LastChildFill="True">
+                    <DockPanel x:Name="SPlyLinesPanel" LastChildFill="True">
                         <DockPanel.Style>
                             <Style TargetType="DockPanel">
                                 <Setter Property="Visibility" Value="Hidden" />
@@ -1013,9 +1301,8 @@
                                 </Style.Triggers>
                             </Style>
                         </DockPanel.Style>
-                        
-                        <Grid x:Name="STreeValues" DockPanel.Dock="Right" Margin="0,10,20,10">
-                        </Grid>
+
+                        <Grid x:Name="STreeValues" DockPanel.Dock="Right" Margin="0,10,20,10" />
                         <DockPanel
                             Margin="10"
                             LastChildFill="True">
@@ -1033,8 +1320,7 @@
                                         <Line Grid.Row="0" Style="{StaticResource TreeLine}" X1="0"
                                               X2="1" VerticalAlignment="Top" />
                                     </Grid>
-                                    <Grid x:Name="STreeLines">
-                                    </Grid>
+                                    <Grid x:Name="STreeLines" />
                                 </Grid>
                                 <Grid
                                     x:Name="SGridAxis"

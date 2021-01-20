@@ -83,9 +83,9 @@
     <Content Include="ColumnDesign.addin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Resource Include="Resources\Logo_full.png" />
     <Resource Include="Resources\Load.png" />
     <Resource Include="Resources\Save.png" />
-    <Resource Include="Resources\Logo_full.jpg" />
     <Page Include="Styles\SettingsStyleDictionary.xaml" />
     <Resource Include="Resources\Logo.ico" />
     <Resource Include="Resources\ColumnCreator16.png" />

@@ -4,8 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="Black" />
-    <SolidColorBrush x:Key="SettingsWindowBorderBrush" Color="Black" />
-    <SolidColorBrush x:Key="SettingsWindowBorderBrushInactive" Color="Black" />
+    <SolidColorBrush x:Key="SettingsWindowBorderBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="SettingsWindowBorderBrushInactive" Color="Transparent" />
     <SolidColorBrush x:Key="SettingsWindowStatusForeground" Color="White" />
     <SolidColorBrush x:Key="SettingsWindowStatusForegroundInactive" Color="White" />
 
@@ -110,7 +110,7 @@
                                                 HorizontalAlignment="Left"
                                                 VerticalAlignment="Center"
                                                 Margin="0"
-                                                FontFamily="Google Sans"
+                                                FontFamily="Open Sans"
                                                 Foreground="White"
                                                 FontSize="12"
                                                 Opacity="1"
@@ -189,7 +189,7 @@
                             <Setter TargetName="PART_Border" Property="Effect">
                                 <Setter.Value>
                                     <DropShadowEffect
-                                        Color="black"
+                                        Color="Black"
                                         Opacity="0.5"
                                         BlurRadius="7"
                                         ShadowDepth="2"
@@ -226,7 +226,7 @@
         <Setter Property="Focusable" Value="false" />
         <Setter Property="Foreground" Value="Black" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontFamily" Value="Google Sans" />
+        <Setter Property="FontFamily" Value="Open Sans" />
         <Setter Property="Margin" Value="10, 0,10,0" />
         <Setter Property="Template">
             <Setter.Value>
@@ -277,13 +277,14 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Template" Value="{DynamicResource TextBoxControlTemplate}" />
     </Style>
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="Margin" Value="5" />
         <Setter Property="Padding" Value="2" />
         <Setter Property="FontSize" Value="10" />
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="Gray" />
+        <Setter Property="Foreground" Value="Black" />
     </Style>
     <Style x:Key="TreeTextBlock" TargetType="{x:Type TextBlock}">
         
@@ -308,20 +309,10 @@
         <Setter Property="Margin" Value="5" />
         <Setter Property="Padding" Value="5" />
     </Style>
-    <Style TargetType="{x:Type RadioButton}">
-        <Setter Property="Margin" Value="5" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="BorderBrush" Value="Black" />
-    </Style>
-    <Style TargetType="{x:Type CheckBox}">
-        <Setter Property="Margin" Value="5" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="BorderBrush" Value="Black" />
-    </Style>
     <ControlTemplate x:Key="TabItemControlTemplate" TargetType="{x:Type TabItem}">
         <Grid x:Name="templateRoot" SnapsToDevicePixels="True">
-            <Border x:Name="mainBorder" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0" Background="{TemplateBinding Background}" Margin="0">
-                <Border x:Name="innerBorder" BorderBrush="Black" BorderThickness="0,0,0,1" Background="White"/>
+            <Border x:Name="mainBorder" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0" Background="{TemplateBinding Background}" Margin="0">
+                <Border x:Name="innerBorder" BorderBrush="Red" BorderThickness="0,0,0,4" Background="White"/>
             </Border>
             <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding HeaderTemplate}" Content="{TemplateBinding Header}" ContentStringFormat="{TemplateBinding HeaderStringFormat}" ContentSource="Header" Focusable="False" HorizontalAlignment="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{Binding VerticalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}"/>
         </Grid>
@@ -511,9 +502,135 @@
                 <Setter Property="Panel.ZIndex" Value="1"/>
                 <Setter Property="Margin" Value="-2,-2,-2,0"/>
                 <Setter Property="Opacity" TargetName="innerBorder" Value="1"/>
-                <Setter Property="BorderThickness" TargetName="innerBorder" Value="0,0,0,1"/>
+                <Setter Property="BorderThickness" TargetName="innerBorder" Value="0,0,0,2"/>
                 <Setter Property="BorderThickness" TargetName="mainBorder" Value="1,1,1,0"/>
             </MultiDataTrigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <ControlTemplate x:Key="CheckBoxControlTemplate" TargetType="{x:Type CheckBox}">
+        <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border x:Name="checkBoxBorder" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                <Grid x:Name="markGrid">
+                    <Path x:Name="optionMark" Data="F1M9.97498,1.22334L4.6983,9.09834 4.52164,9.09834 0,5.19331 1.27664,3.52165 4.255,6.08833 8.33331,1.52588E-05 9.97498,1.22334z" Fill="#FF212121" Margin="1" Opacity="0" Stretch="None"/>
+                    <Rectangle x:Name="indeterminateMark" Fill="#FF212121" Margin="2" Opacity="0"/>
+                </Grid>
+            </Border>
+            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Grid.Column="1" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="HasContent" Value="True">
+                <Setter Property="FocusVisualStyle">
+                    <Setter.Value>
+                        <Style>
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate>
+                                        <Rectangle Margin="14,0,0,0" SnapsToDevicePixels="True" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Padding" Value="4,-1,0,0"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" TargetName="checkBoxBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="Transparent"/>
+                
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" TargetName="checkBoxBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="Red"/>
+                
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" TargetName="checkBoxBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="Transparent"/>
+               
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Opacity" TargetName="optionMark" Value="1"/>
+                <Setter Property="Opacity" TargetName="indeterminateMark" Value="0"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="{x:Null}">
+                <Setter Property="Opacity" TargetName="optionMark" Value="0"/>
+                <Setter Property="Opacity" TargetName="indeterminateMark" Value="1"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <ControlTemplate x:Key="TextBoxControlTemplate" TargetType="{x:Type TextBox}">
+        <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" TargetName="border" Value="0.56"/>
+            </Trigger>            
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+    
+    <Style TargetType="{x:Type RadioButton}">
+        <Setter Property="Margin" Value="5"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="BorderBrush" Value="Black"/>
+    </Style>
+    <ControlTemplate x:Key="RadioButtonControlTemplate" TargetType="{x:Type RadioButton}">
+        <Grid x:Name="templateRoot" Background="Transparent" SnapsToDevicePixels="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border x:Name="radioButtonBorder" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" CornerRadius="100" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="1,1,2,1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                <Grid x:Name="markGrid" Margin="2">
+                    <Ellipse x:Name="optionMark" Fill="Red" MinWidth="6" MinHeight="6" Opacity="0"/>
+                </Grid>
+            </Border>
+            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Grid.Column="1" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+        </Grid>
+        <ControlTemplate.Triggers>
+            <Trigger Property="HasContent" Value="True">
+                <Setter Property="FocusVisualStyle">
+                    <Setter.Value>
+                        <Style>
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate>
+                                        <Rectangle Margin="14,0,0,0" SnapsToDevicePixels="True" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Padding" Value="4,-1,0,0"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="Black"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="Red"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="Gray"/>
+                <Setter Property="Foreground" Value="Gray"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="Gray"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" TargetName="radioButtonBorder" Value="White"/>
+                <Setter Property="BorderBrush" TargetName="radioButtonBorder" Value="Black"/>
+                <Setter Property="Fill" TargetName="optionMark" Value="Red"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Opacity" TargetName="optionMark" Value="1"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="{x:Null}">
+                <Setter Property="Opacity" TargetName="optionMark" Value="0.56"/>
+            </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 </ResourceDictionary>

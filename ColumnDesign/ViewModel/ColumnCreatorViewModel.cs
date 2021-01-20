@@ -367,9 +367,13 @@ namespace ColumnDesign.ViewModel
         {
             if (value == null || ((string) value).Length == 0)
             {
-                return new ValidationResult(false, $"Please enter value in the range: {Min}-{Max}.");
+                return ValidationResult.ValidResult;
             }
 
+            if (((string) value).Substring(0,1).Equals("-") )
+            {
+                return new ValidationResult(false, $"Please enter value in the range: {Min}-{Max}.");
+            }
             var val = ConvertToNum((string) value);
             if (val == 0d)
             {

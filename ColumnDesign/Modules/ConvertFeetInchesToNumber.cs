@@ -14,7 +14,6 @@ namespace ColumnDesign.Modules
             var strTemp4 = "";
             if (stringInput == null || stringInput.Equals("") || string.Equals(stringInput, " ") ||
                 string.Equals(stringInput, ".")) return 0;
-
             for (var iCnt0 = 0; iCnt0 < stringInput.Length; iCnt0++)
             {
                 if (int.TryParse(stringInput.Substring(iCnt0, 1), out _))
