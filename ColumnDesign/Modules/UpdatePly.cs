@@ -15,19 +15,13 @@ namespace ColumnDesign.Modules
 {
     public static class UpdatePly_Function
     {
-        public static void UpdatePly(ColumnCreatorView ui, ColumnCreatorViewModel vm)
+        public static void UpdatePly(ColumnCreatorView ui, ColumnCreatorViewModel vm, bool editWin = false)
         {
             var x = ConvertToNum(vm.WidthX);
             var y = ConvertToNum(vm.LengthY);
             var z = ConvertToNum(vm.HeightZ);
             if (x == 0 || y == 0 || z == 0) return;
             double[] ply_seams = { };
-
-            vm.WinDim1 = ConvertFtIn(z / 5);
-            vm.WinDim2 = ConvertFtIn(z - ConvertToNum(vm.WinDim1));
-            goto UpdatePlyColorCheck;
-
-            UpdatePlyColorCheck:
             double temp_ht = 0;
             if (ui.BoxPlySeams.Text.Equals(""))
             {
@@ -69,56 +63,32 @@ namespace ColumnDesign.Modules
             pt_draw[0] = 200;
             pt_draw[1] = 216;
             pt_draw[2] = 0;
-            const double px_z_max = 200;
-            var px_x = px_z_max * (x / z);
-            var px_y = px_z_max * (y / z);
-            double px_width;
-            switch (vm.SlblAxis)
-            {
-                case "X":
-                    px_width = px_x;
-                    break;
-                case "Y":
-                    px_width = px_y;
-                    break;
-                default:
-                    throw new ArgumentException("Error: Horizontal dimension not x or y");
-            }
             
-            if (vm.WindowX || vm.WindowY)
-            {
-                if (vm.WinDim1.Equals("Z1"))
-                {
-                    vm.WinDim1 = ConvertFtIn(z / 5);
-                    vm.WinDim2 = ConvertFtIn(z - ConvertToNum(vm.WinDim1));
-                }
-
-                if (ConvertToNum(vm.WinDim1) > z)
-                {
-                    vm.WinDim1 = ConvertFtIn(z);
-                    vm.WinDim2 = ConvertFtIn(0);
-                }
-                else if (ConvertToNum(vm.WinDim2) > z)
-                {
-                    vm.WinDim2 = ConvertFtIn(z);
-                    vm.WinDim1 = ConvertFtIn(0);
-                }
-            }
-
             ui.TreeLines.Children.Clear();
             ui.TreeLines.RowDefinitions.Clear();
             ui.TreeLines.RowDefinitions.Add(new RowDefinition());
             ui.TreeValues.Children.Clear();
             ui.TreeValues.RowDefinitions.Clear();   
+            ui.GridWinDim.RowDefinitions.Clear();
             var lineStyle = ui.FindResource("TreeLine") as Style;
             var textStyle = ui.FindResource("TreeTextBlock") as Style;
             var gcd = MultiGcd(ply_seams);
             var lineCount = (int)Math.Round(z/ gcd);
-            var winHeight = (int) ConvertToNum(vm.WinDim1);
+            var winHeight1 = (int) ConvertToNum(vm.WinDim1);
+            var winHeight2 = (int) ConvertToNum(vm.WinDim2);
+            if (winHeight1>z || winHeight2>z) return;
             if (vm.WindowX || vm.WindowY)
             {
-                gcd = Gcd(lineCount, winHeight );
-                lineCount = (int) Math.Round(z/ gcd);
+                if (winHeight1 != 0 && winHeight2 != 0)
+                {
+                    gcd = Gcd(lineCount, winHeight1);
+                    lineCount = (int) Math.Round(z / gcd);
+                }
+
+                for (var i = 0; i < lineCount*2+1; i++)
+                {
+                    ui.GridWinDim.RowDefinitions.Add(new RowDefinition());
+                }
             }
             for (var i = 0; i < lineCount-1; i++)
             {
@@ -142,7 +112,7 @@ namespace ColumnDesign.Modules
                     StrokeThickness = 2,
                     Style = lineStyle,
                 };
-                Grid.SetRow(line, ui.TreeLines.RowDefinitions.Count-(int)sumPly/gcd);
+                Grid.SetRow(line, ui.TreeLines.RowDefinitions.Count-(int)Math.Round(sumPly/gcd));
                 ui.TreeLines.Children.Add(line);
             }
 
@@ -157,8 +127,30 @@ namespace ColumnDesign.Modules
                     StrokeThickness = 2,
                     Stroke = new SolidColorBrush(Colors.Red)
                 };
-                Grid.SetRow(line, winHeight/gcd);
+                int windowRow;
+                if ( winHeight1==0)
+                {
+                    windowRow = 0;
+                    line.VerticalAlignment = VerticalAlignment.Top;
+                }
+                else if ( winHeight2==0)
+                {
+                    windowRow  =ui.TreeLines.RowDefinitions.Count-1;
+                    line.VerticalAlignment = VerticalAlignment.Bottom;
+                }
+                else
+                {
+                   windowRow  = (int)Math.Round((double)winHeight1 / gcd,0);
+                }
+                Grid.SetRow(line, windowRow);
                 ui.TreeLines.Children.Add(line);
+
+                var winDim1Row = (int)Math.Round((double)windowRow / 2,0);
+                var winDim2Row = (int)Math.Round((double)(ui.GridWinDim.RowDefinitions.Count+windowRow)/2,0);
+                Grid.SetRow(ui.WinDim1, winDim1Row);
+                Grid.SetRow(ui.WinDim2, winDim2Row);
+                ui.GridWinDim.RowDefinitions[winDim1Row].Height = new GridLength(20);
+                ui.GridWinDim.RowDefinitions[winDim2Row].Height = new GridLength(20);
             }
             sumPly = 0d;
             foreach (var t in ply_seams)
@@ -170,12 +162,16 @@ namespace ColumnDesign.Modules
                     Text = ConvertFtIn(t),
                     Style = textStyle,
                 };
-                Grid.SetRow(value, ui.TreeValues.RowDefinitions.Count-1-(int)sumPly/gcd);
-                ui.TreeValues.RowDefinitions[ui.TreeValues.RowDefinitions.Count - 1 - (int) sumPly / gcd].Height = new GridLength(20);
+                var textRow = ui.TreeValues.RowDefinitions.Count - 1 - (int)Math.Round(sumPly / gcd, 0);
+                Grid.SetRow(value, textRow);
+                ui.TreeValues.RowDefinitions[textRow].Height = new GridLength(20);
                 ui.TreeValues.Children.Add(value);
                 sumPly += t;
             }
 
+            if (editWin) return;
+            vm.WinDim1 = ConvertFtIn(z / 5);
+            vm.WinDim2 = ConvertFtIn(z - ConvertToNum(vm.WinDim1));
         }
 
         public static int ValidatePlySeams(ColumnCreatorView ui, double[] ply_seams, double x, double y,

@@ -8,8 +8,11 @@ using System.Windows.Input;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using ColumnDesign.Methods;
-using ColumnDesign.Modules;
 using ColumnDesign.ViewModel;
+using static ColumnDesign.Modules.ConvertFeetInchesToNumber;
+using static ColumnDesign.Modules.ConvertNumberToFeetInches;
+using static ColumnDesign.Modules.sUpdatePly_Function;
+using static ColumnDesign.Modules.UpdatePly_Function;
 using TextBox = System.Windows.Controls.TextBox;
 using Visibility = System.Windows.Visibility;
 
@@ -53,6 +56,7 @@ namespace ColumnDesign.UI
             _vm.Date = now;
             _vm.SDate = now;
             _vm.PlywoodType = "HDO";
+            _vm.SPlywoodType = "HDO";
             _vm.SlblAxis = "X";
         }
 
@@ -70,22 +74,16 @@ namespace ColumnDesign.UI
         private void GridAxis_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _vm.SlblAxis = _vm.SlblAxis.Equals("X") ? "Y" : "X";
-            UpdatePly_Function.UpdatePly(this, _vm);
-        }
-
-        private void Window_Click(object sender, RoutedEventArgs e)
-        {
-            UpdatePly_Function.UpdatePly(this, _vm);
         }
 
         private void BoxPlySeams_OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            UpdatePly_Function.UpdatePly(this, _vm);
+            UpdatePly(this, _vm);
         }
 
         private void SBoxPlySeams_OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            sUpdatePly_Function.sUpdatePly(this, _vm);
+            sUpdatePly(this, _vm);
         }
 
         private void SaveSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
@@ -127,7 +125,7 @@ namespace ColumnDesign.UI
             _vm.SheetName = file.ReadLine() ?? string.Empty;
             ProjectTitle.Text = file.ReadLine() ?? string.Empty;
             ProjectAddress.Text = file.ReadLine() ?? string.Empty;
-            _vm.Date= file.ReadLine() ?? string.Empty;
+            _vm.Date = file.ReadLine() ?? string.Empty;
             SheetIssuedFor.Text = file.ReadLine() ?? string.Empty;
             DrawnBy.Text = file.ReadLine() ?? string.Empty;
             JobN.Text = file.ReadLine() ?? string.Empty;
@@ -136,14 +134,15 @@ namespace ColumnDesign.UI
             Area.Text = file.ReadLine() ?? string.Empty;
             file.Close();
         }
+
         private void SLoadSettings_OnMouseDown(object sender, RoutedEventArgs routedEventArgs)
         {
             if (!File.Exists(GlobalNames.ConfigScissorsLocation)) return;
             using var file = new StreamReader(GlobalNames.ConfigScissorsLocation);
-            _vm.SSheetName= file.ReadLine() ?? string.Empty;
+            _vm.SSheetName = file.ReadLine() ?? string.Empty;
             SProjectTitle.Text = file.ReadLine() ?? string.Empty;
             SProjectAddress.Text = file.ReadLine() ?? string.Empty;
-            _vm. SDate = file.ReadLine() ?? string.Empty;
+            _vm.SDate = file.ReadLine() ?? string.Empty;
             SSheetIssuedFor.Text = file.ReadLine() ?? string.Empty;
             SDrawnBy.Text = file.ReadLine() ?? string.Empty;
             SJobN.Text = file.ReadLine() ?? string.Empty;
@@ -157,21 +156,107 @@ namespace ColumnDesign.UI
         {
             if (sender is not TextBox box) return;
             WidthXHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            UpdatePly(this, _vm);
         }
+
         private void LengthY_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is not TextBox box) return;
             LengthYHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            UpdatePly(this, _vm);
         }
+
         private void HeightZ_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is not TextBox box) return;
             HeightZHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            UpdatePly(this, _vm);
         }
+
         private void Quantity_OnTextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is not TextBox box) return;
             QuantityHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            UpdatePly(this, _vm);
+        }
+private void SWidthX_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            SWidthXHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            sUpdatePly(this, _vm);
+        }
+
+        private void SLengthY_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            SLengthYHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            sUpdatePly(this, _vm);
+        }
+
+        private void SHeightZ_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            SHeightZHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            sUpdatePly(this, _vm);
+        }
+
+        private void SQuantity_OnTextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            SQuantityHint.Visibility = box.Text.Length == 0 ? Visibility.Visible : Visibility.Hidden;
+            sUpdatePly(this, _vm);
+        }
+
+        private void WinDim1_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            if (ConvertToNum(box.Text) > ConvertToNum(_vm.HeightZ))
+            {
+                _vm.WinDim1 = ConvertFtIn(ConvertToNum(_vm.HeightZ));
+                _vm.WinDim2 = ConvertFtIn(0);
+                UpdatePly(this, _vm, true);
+            }
+        }
+
+        private void WinDim2_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            if (ConvertToNum(box.Text) > ConvertToNum(_vm.HeightZ))
+            {
+                _vm.WinDim1 = ConvertFtIn(0);
+                _vm.WinDim2 = ConvertFtIn(ConvertToNum(_vm.HeightZ));
+                UpdatePly(this, _vm, true);
+            }
+        }
+
+        private void WinDim1_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            if (ConvertToNum(box.Text) > ConvertToNum(_vm.HeightZ))
+            {
+                _vm.WinDim2 = ConvertFtIn(0);
+                UpdatePly(this, _vm, true);
+            }
+            else
+            {
+                _vm.WinDim2 = ConvertFtIn(ConvertToNum(_vm.HeightZ) - ConvertToNum(box.Text));
+                UpdatePly(this, _vm, true);
+            }
+        }
+
+        private void WinDim2_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox box) return;
+            if (ConvertToNum(box.Text) > ConvertToNum(_vm.HeightZ))
+            {
+                _vm.WinDim1 = ConvertFtIn(0);
+                UpdatePly(this, _vm, true);
+            }
+            else
+            {
+                _vm.WinDim1 = ConvertFtIn(ConvertToNum(_vm.HeightZ) - ConvertToNum(box.Text));
+                UpdatePly(this, _vm, true);
+            }
         }
     }
 }

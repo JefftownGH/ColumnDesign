@@ -63,22 +63,7 @@ namespace ColumnDesign.Modules
             pt_draw[0] = 200;
             pt_draw[1] = 216;
             pt_draw[2] = 0;
-            double px_z;
-            double px_x;
-            double px_y;
-            double px_z_max;
-            if (z > 96)
-            {
-                px_z_max = 200;
-                px_x = px_z_max * (x / z);
-                px_y = px_z_max * (y / z);
-            }
-            else
-            {
-                px_z_max = 200 * z / 96;
-                px_x = px_z_max * (x / z) * z / 96;
-                px_y = px_z_max * (y / z) * z / 96;
-            }
+            
             ui.STreeLines.Children.Clear();
             ui.STreeLines.RowDefinitions.Clear();
             ui.STreeLines.RowDefinitions.Add(new RowDefinition());
@@ -109,7 +94,7 @@ namespace ColumnDesign.Modules
                     VerticalAlignment = VerticalAlignment.Center,
                     Style = lineStyle,
                 };
-                Grid.SetRow(line, ui.STreeLines.RowDefinitions.Count-(int)sumPly/gcd);
+                Grid.SetRow(line, ui.STreeLines.RowDefinitions.Count-(int)Math.Round(sumPly/gcd));
                 ui.STreeLines.Children.Add(line);
             }
             sumPly = 0d;
@@ -122,8 +107,9 @@ namespace ColumnDesign.Modules
                     Text = ConvertFtIn(t),
                     Style = textStyle,
                 };
-                Grid.SetRow(value, ui.STreeValues.RowDefinitions.Count-1-(int)sumPly/gcd);
-                ui.STreeValues.RowDefinitions[ui.STreeValues.RowDefinitions.Count - 1 - (int) sumPly / gcd].Height = new GridLength(20);
+                var textRow = ui.STreeValues.RowDefinitions.Count - 1 - (int)Math.Round(sumPly / gcd, 0);
+                Grid.SetRow(value, textRow);
+                ui.STreeValues.RowDefinitions[textRow].Height = new GridLength(20);
                 ui.STreeValues.Children.Add(value);
                 sumPly += t;
             }

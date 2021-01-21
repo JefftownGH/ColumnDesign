@@ -75,6 +75,9 @@
       <DependentUpon>ColumnCreatorView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Methods\Methods.cs" />
+    <Compile Include="UI\Warning.xaml.cs">
+      <DependentUpon>Warning.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ViewModel\ColumnCreatorViewModel.cs" />
     <Compile Include="ViewModel\DrawButtonHandler.cs" />
   </ItemGroup>
@@ -83,6 +86,7 @@
     <Content Include="ColumnDesign.addin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Page Include="UI\Warning.xaml" />
     <Resource Include="Resources\Logo_full.png" />
     <Resource Include="Resources\Load.png" />
     <Resource Include="Resources\Save.png" />

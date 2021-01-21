@@ -54,7 +54,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(WidthX));
                 OnPropertyChanged(nameof(SheetName));
-                UpdatePly(_view, this);
             }
         }
 
@@ -69,7 +68,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SWidthX));
                 OnPropertyChanged(nameof(SSheetName));
-                sUpdatePly(_view, this);
             }
         }
 
@@ -83,7 +81,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(LengthY));
                 OnPropertyChanged(nameof(SheetName));
-                UpdatePly(_view, this);
             }
         }
 
@@ -98,7 +95,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SLengthY));
                 OnPropertyChanged(nameof(SSheetName));
-                sUpdatePly(_view, this);
             }
         }
 
@@ -112,7 +108,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(HeightZ));
                 OnPropertyChanged(nameof(SheetName));
-                UpdatePly(_view, this);
             }
         }
 
@@ -127,7 +122,6 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SHeightZ));
                 OnPropertyChanged(nameof(SSheetName));
-                sUpdatePly(_view, this);
             }
         }
 
@@ -141,7 +135,6 @@ namespace ColumnDesign.ViewModel
                 _boxPlySeams = "";
                 OnPropertyChanged(nameof(BoxPlySeams));
                 OnPropertyChanged(nameof(Quantity));
-                UpdatePly(_view, this);
             }
         }
 
@@ -155,7 +148,6 @@ namespace ColumnDesign.ViewModel
                 sCheckHeight(ConvertToNum(SWidthX), ConvertToNum(SLengthY), ConvertToNum(SHeightZ), _view);
                 OnPropertyChanged(nameof(SBoxPlySeams));
                 OnPropertyChanged(nameof(SQuantity));
-                sUpdatePly(_view, this);
             }
         }
 
@@ -190,6 +182,7 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(WindowX));
                 OnPropertyChanged(nameof(WindowY));
                 OnPropertyChanged(nameof(SlblAxis));
+                UpdatePly(_view, this);
             }
         }
 
@@ -204,6 +197,7 @@ namespace ColumnDesign.ViewModel
                 OnPropertyChanged(nameof(WindowY));
                 OnPropertyChanged(nameof(WindowX));
                 OnPropertyChanged(nameof(SlblAxis));
+                UpdatePly(_view, this);
             }
         }
 
@@ -264,7 +258,6 @@ namespace ColumnDesign.ViewModel
             {
                 _boxPlySeams = value;
                 OnPropertyChanged(nameof(BoxPlySeams));
-                UpdatePly(_view, this);
             }
         }
 
@@ -275,7 +268,6 @@ namespace ColumnDesign.ViewModel
             {
                 _sBoxPlySeams = value;
                 OnPropertyChanged(nameof(SBoxPlySeams));
-                sUpdatePly(_view, this);
             }
         }
 
