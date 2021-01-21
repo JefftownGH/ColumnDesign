@@ -37,7 +37,8 @@ namespace ColumnDesign.Methods
             }
             catch (Exception e)
             {
-                TaskDialog.Show("Error", e.Message);
+                var dialog = new Warning(e.Message);
+                dialog.ShowDialog();
             }
         }
     }

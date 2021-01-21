@@ -4,12 +4,79 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:ColumnDesign.UI"
     mc:Ignorable="d"
-    Title="Warning"
-    Height="450"
-    Width="800">
+    Title="ColumnCreator (version 5.0) • Warning"
+    Height="210"
+    Width="380"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterScreen"
+    Icon="../Resources/Logo.ico"
+    Style="{DynamicResource SettingsWindowStyle}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="../Styles/SettingsStyleDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
-        
+        <Image
+            Source="../Resources/Warning.png"
+            Height="50"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Margin="47,0,0,80" />
+        <TextBlock
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            FontSize="12"
+            Margin="115,5,5,114"
+            FontWeight="Bold">
+            Warning
+        </TextBlock>
+        <TextBlock
+            x:Name="Message"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            FontSize="12"
+            Margin="115,55,0,0"
+            MaxWidth="220"
+            Width="220"
+            Text="You specified a picking loop instead of a regular squaring corner to be used and you have a pour window."
+            TextWrapping="WrapWithOverflow"
+            MaxHeight="64"
+            Height="64" />
+        <Button
+            Width="70"
+            Height="25"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            BorderBrush="Red"
+            Background="White"
+            Margin="5,5,120,15"
+            FontWeight="Bold"
+            FontSize="10"
+            IsDefault="True"
+            Click="ButtonOk_OnClick"
+            Template="{DynamicResource ButtonControlTemplate}">
+            OK
+        </Button>
+        <Button
+            Width="70"
+            Height="25"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            BorderBrush="Red"
+            Background="Red"
+            Margin="5,5,27,15"
+            FontWeight="Bold"
+            FontSize="10"
+            Foreground="White"
+            IsCancel="True"
+            Click="ButtonCancel_OnClick"
+            Template="{DynamicResource ButtonControlTemplate}">
+            Cancel
+        </Button>
     </Grid>
 </Window>

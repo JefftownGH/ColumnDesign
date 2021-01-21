@@ -28,7 +28,7 @@ namespace ColumnDesign.Methods
         private static double WinPos;
         private const double WinGap = 6;
         private const double WinStudOff = 1;
-
+        
         public static void CreateGates(UIDocument uiDoc, ColumnCreatorView ui, ColumnCreatorViewModel vm)
         {
             _uiDoc = uiDoc;
@@ -38,12 +38,20 @@ namespace ColumnDesign.Methods
             const DrawingTypes type = DrawingTypes.Gates;
             using var tr = new Transaction(_doc, $"Create new {type.ToString().ToLower()} sheet");
             tr.Start();
-            LoadFamilies(_doc);
+            if (LoadFamilies(_doc) == false)
+            {
+                tr.RollBack();
+                return;
+            }
             var sheet = CreateSheet(_doc, ui, DrawingTypes.Gates);
             var draftingView = CreateDraftingView(_doc, sheet.Name, sheet.SheetNumber);
             var zero = CalculateDraftingLocation(_doc, draftingView);
             Viewport.Create(_doc, sheet.Id, draftingView.Id, XYZ.Zero);
-            CreateClamps(draftingView);
+            if (CreateClamps(draftingView)== false)
+            {
+                tr.RollBack();
+                return;
+            }
             _doc.Delete(zero.Id);
             tr.Commit();
             uiDoc.ActiveView = sheet;
@@ -57,7 +65,11 @@ namespace ColumnDesign.Methods
             const DrawingTypes type = DrawingTypes.Scissors;
             using var tr = new Transaction(_doc, $"Create new {type.ToString().ToLower()} sheet");
             tr.Start();
-            LoadFamilies(_doc);
+            if (LoadFamilies(_doc) == false)
+            {
+                tr.RollBack();
+                return;
+            }
             var sheet = CreateSheet(_doc, ui, DrawingTypes.Scissors);
             var draftingView = CreateDraftingView(_doc, sheet.Name, sheet.SheetNumber);
             var zero = CalculateDraftingLocation(_doc, draftingView);
@@ -68,7 +80,7 @@ namespace ColumnDesign.Methods
             uiDoc.ActiveView = sheet;
         }
 
-        private static void CreateClamps(View draftingView)
+        private static bool CreateClamps(View draftingView)
         {
             double x;
             double y;
@@ -159,25 +171,23 @@ namespace ColumnDesign.Methods
 
             if (window && (z - WinPos) > 48)
             {
-                var dialog = new TaskDialog("Warning")
+                var dialog = new Warning("Pour window exceeds 48\" in height. This is allowed but not recommended");
+                if (dialog.ShowDialog() == true)
                 {
-                    MainContent = "Pour window exceeds 48\" in height. This is allowed but not recommended",
-                    AllowCancellation = true,
-                    CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel
-                };
-                if (dialog.Show() == TaskDialogResult.Cancel) return;
+                    if(dialog.ContinueOperation==false) return false;
+                }
             }
 
             if (window && _ui.Picking.IsChecked == true)
             {
-                var dialog = new TaskDialog("Warning")
+                var dialog = new Warning("You specified a picking loop instead of a regular squaring corner to be used and you have a pour window. The picking loop will be removed from 1 corner to allow the gates clamp to swing open");
+                if (dialog.ShowDialog() == true)
                 {
-                    MainContent =
-                        "You specified a picking loop instead of a regular squaring corner to be used and you have a pour window. The picking loop will be removed from 1 corner to allow the gates clamp to swing open",
-                    AllowCancellation = true,
-                    CommonButtons = TaskDialogCommonButtons.Ok | TaskDialogCommonButtons.Cancel
-                };
-                if (dialog.Show() == TaskDialogResult.Cancel) return;
+                    if (dialog.ContinueOperation == false)
+                    {
+                        return false;
+                    }
+                }
             }
 
             if (_ui.Picking.IsChecked == true && (x < 14 || y < 14))
@@ -188,14 +198,13 @@ namespace ColumnDesign.Methods
 
             if (((int) x - x) != 0 || ((int) y - y) != 0)
             {
-                var dialog = new TaskDialog("Warning")
+                var dialog =
+                    new Warning(
+                        "Column plan dimensions are not divisible by 1 inch. Gates clamps have holes spaced 1 inch on center\nDo you know what you're doing?");
+                if (dialog.ShowDialog() == true)
                 {
-                    MainContent =
-                        "Column plan dimensions are not divisible by 1 inch. Gates clamps have holes spaced 1 inch on center\nDo you know what you're doing?",
-                    AllowCancellation = true,
-                    CommonButtons = TaskDialogCommonButtons.Yes | TaskDialogCommonButtons.No
-                };
-                if (dialog.Show() == TaskDialogResult.No) return;
+                    if(dialog.ContinueOperation==false) return false;
+                }
             }
 
             if (x < 14 || y < 14)
@@ -375,7 +384,11 @@ namespace ColumnDesign.Methods
             {
                 if (stud_spacing_x[i + 1] - stud_spacing_x[i] < 3.5)
                 {
-                    TaskDialog.Show("Error", "Error: Studs overlap, check and manually correct drawing.");
+                    var dialog = new Warning("Studs overlap, check and manually correct drawing");
+                    if (dialog.ShowDialog() == true)
+                    {
+                        if(dialog.ContinueOperation==false) return false;
+                    }
                     goto EndOfStudChecks;
                 }
             }
@@ -384,7 +397,11 @@ namespace ColumnDesign.Methods
             {
                 if (stud_spacing_y[i + 1] - stud_spacing_y[i] < 3.5)
                 {
-                    TaskDialog.Show("Error", "Error: Studs overlap, check and manually correct drawing.");
+                    var dialog = new Warning("Studs overlap, check and manually correct drawing");
+                    if (dialog.ShowDialog() == true)
+                    {
+                        if(dialog.ContinueOperation==false) return false;
+                    }
                     goto EndOfStudChecks;
                 }
             }
@@ -395,8 +412,11 @@ namespace ColumnDesign.Methods
                 {
                     if (stud_spacing_x[i + 1] - stud_spacing_x[i] < 5)
                     {
-                        TaskDialog.Show("Error",
-                            "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        var dialog = new Warning("Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        if (dialog.ShowDialog() == true)
+                        {
+                            if(dialog.ContinueOperation==false) return false;
+                        }
                         goto EndOfStudChecks;
                     }
                 }
@@ -405,8 +425,11 @@ namespace ColumnDesign.Methods
                 {
                     if (stud_spacing_y[i + 1] - stud_spacing_y[i] < 5)
                     {
-                        TaskDialog.Show("Error",
-                            "Warning: Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        var dialog = new Warning("Insufficient clearance between studs for a 2x2 window lock. Check and manually correct drawing if necessary.");
+                        if (dialog.ShowDialog() == true)
+                        {
+                            if(dialog.ContinueOperation==false) return false;
+                        }
                         goto EndOfStudChecks;
                     }
                 }
@@ -861,7 +884,7 @@ namespace ColumnDesign.Methods
                 if (clamp_spacing_con[1] < WinPos)
                 {
                     throw new Exception(
-                        "Warning:\nPour window is only secured by 1 clamp. Consult with an engineering manager");
+                        "Pour window is only secured by 1 clamp. Consult with an engineering manager");
                 }
             }
 
@@ -2984,6 +3007,7 @@ namespace ColumnDesign.Methods
             };
             TextNote.Create(_doc, draftingView.Id, GetXYZByPoint(pt32),
                 UnitUtils.ConvertToInternalUnits(30, DisplayUnitType.DUT_MILLIMETERS), count_str, textNoteOptions);
+            return true;
         }
 
         public static XYZ GetXYZByPoint(double[] point)
@@ -3108,7 +3132,7 @@ namespace ColumnDesign.Methods
             FilledRegion.Create(_doc, patterns.Id, activeViewId, boundaries);
         }
 
-        public static void LoadFamilies(Document doc)
+        public static bool LoadFamilies(Document doc)
         {
             try
             {
@@ -3119,7 +3143,11 @@ namespace ColumnDesign.Methods
             }
             catch (Exception e)
             {
-                TaskDialog.Show("Message", "Wait for the families to be loaded into the project");
+                var dialog = new Warning("Wait for the families to be loaded into the project");
+                if (dialog.ShowDialog() == true)
+                {
+                    if(dialog.ContinueOperation==false) return false;
+                }
                 var docHasFamily =
                     Application.RApplication.Application.OpenDocumentFile(
                         $"{GlobalNames.FamiliesLocationPrefix}BasicProject.rvt");
@@ -3262,6 +3290,7 @@ namespace ColumnDesign.Methods
                     doc.LoadFamily($"{GlobalNames.FamiliesLocationPrefix}{family}", out _);
                 }
             }
+            return true;
         }
     }
 }
